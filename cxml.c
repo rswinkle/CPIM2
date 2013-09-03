@@ -25,21 +25,15 @@ void free_xml_tree(xml_tree* tree)
 	list_head* p, *n;
 	xml_tree* tmp_tree;
 
-	printf("key = %s\n", tree->key);
 	free(tree->key);
 	if (tree->is_tree) {
-		puts("tree");
-//		getchar();
 		list_for_each_safe(p, n, &tree->child_list) {
 			tmp_tree = list_entry(p, xml_tree, list);
-			printf("deleting %s\n", tmp_tree->key);
 			free_xml_tree(tmp_tree);
 		}
 	} else {
-		printf("value = %s\n", tree->value);
 		free(tree->value);
 	}
-
 	free(tree);
 }
 
@@ -51,19 +45,17 @@ int parse_xml_file(FILE* file, xml_tree* tree)
 
 	temp = getc(file);
 	if (temp != '<') {
-		STDERR("Parsing Error");
+		STDERR("Expected '<'\n");
 		return 0;
 	}
 
 	tmp_str = freadstring(file, '>', 0);
 	if (!tmp_str) {
-		fclose(file);
-		perror("2");
 		return 0;
 	}
 
 	tree->key = tmp_str;
-	printf("key = %s %p\n", tmp_str, tree->key);
+
 	while (1) {
 		temp = getc(file);
 		while (isspace(temp)) temp = getc(file);
@@ -74,7 +66,6 @@ int parse_xml_file(FILE* file, xml_tree* tree)
 		if (temp != '<') {
 			tmp_str = freadstring(file, '<', 0);
 			if (!tmp_str) {
-				perror("3");
 				return 0;
 			}
 			tree->is_tree = 0;
@@ -82,7 +73,7 @@ int parse_xml_file(FILE* file, xml_tree* tree)
 			
 			temp = getc(file);
 			if (temp != '/') {
-				perror("3.5");
+				STDERR("Expected closing tag not opening tag\n");
 				return 0;
 			}
 			break;
@@ -90,33 +81,26 @@ int parse_xml_file(FILE* file, xml_tree* tree)
 		} else if (temp2 != '/') {      //it's a subtree
 			tree->is_tree = 1;
 			if (!(tmp_tree = new_xml_tree())) {
-				fclose(file);
-				perror("4");
+				perror("Error allocating memory");
 				return 0;
 			}
 			if (!parse_xml_file(file, tmp_tree)) {
-				perror("5");
 				return 0;
 			}
 			list_add_tail(&tmp_tree->list, &tree->child_list);
-		} else {
+		} else {     //it's the matching level closing tag
 			getc(file);
 			getc(file);
 			break;
 		}
 	}
-			
-	printf("closing %s\n", tree->key);
 
 	tmp_str = freadstring(file, '>', 0);
 	if (!tmp_str) {
-		perror("7");
-		fclose(file);
 		return 0;
 	}
 	if (strcmp(tmp_str, tree->key)) {
-		perror("8");
-		fclose(file);
+		STDERR("Mismatched closing tag\n");
 		return 0;
 	}
 	

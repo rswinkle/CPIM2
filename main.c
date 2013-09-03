@@ -1,5 +1,6 @@
-
+#include "cxml.h"
 #include "c_utils.h"
+#include "clist.h"
 
 #define CVECTOR_IMPLEMENTATION
 #include "cvector.h"
@@ -28,6 +29,9 @@ typedef struct contact
 	vector_void attribs;
 } contact;
 
+int saved;
+
+
 /* puts adds a newline ... change all to fputs for consistency? */
 void print_menu()
 {
@@ -37,7 +41,8 @@ void print_menu()
 	puts("Save Contacts (V)");
 	puts("Load Contacts (L)");
 	puts("Remove Contacts (R)");
-	puts("Search (S)");
+	puts("Sort (S)");
+	puts("Find (F)");
 	puts("Quit (Q)");
 	puts("Help (?)");
 
@@ -135,48 +140,109 @@ void add_contact(vector_void* contacts)
 
 		push_void(attribs, &tmp_attrib);
 
-		puts("Do you want to add another attribute? (Y/N)\n");
+		puts("Do you want to add another attribute? (Y/N)");
 		choice = read_char(stdin);
 	}
+	saved = 0;
 }
 
 void save_contacts(vector_void* contacts)
 {
 	char* tmp_str = NULL;
-	char choice, clean;
-	c_array out;
-	SET_C_ARRAY(out, contacts->a, contacts->elem_size, contacts->size); 	
+	char clean;
+	contact* c;
+	attribute* a;
 	
 	puts("Enter the name of a file to save to:");
 	READ_STRING(tmp_str, clean);
 
-	printf("%d, %d\n", out.elem_size, out.len);
-	if (!file_open_write(tmp_str, "wb", &out)) {
-		perror("Error saving to file");
+	FILE* file = fopen(tmp_str, "w");
+	if (!file) {
+		perror("Error opening file");
 		return;
 	}
+
+	fprintf(file, "<contacts>\n");
+	for (int i=0; i<contacts->size; ++i) {
+		c = GET_CONTACT(contacts, i);
+		fprintf(file, "\t<contact>\n");
+		fprintf(file, "\t\t<lastname>%s</lastname>\n", c->last);
+		fprintf(file, "\t\t<firstname>%s</firstname>\n", c->first);
+		fprintf(file, "\t\t<phone>%s</phone>\n", c->phone);
+		for (int j=0; j<c->attribs.size; ++j) {
+			a = GET_ATTRIBUTE(&c->attribs, j);
+			fprintf(file, "\t\t<%s>%s</%s>\n", a->name, a->value, a->name);
+		}
+		fprintf(file, "\t</contact>\n");
+	}
+	fprintf(file, "</contacts>\n");
+	fclose(file);
+	saved = 1;
+
 	puts("Contacts saved successfully.");
 }
 
 void load_contacts(vector_void* contacts)
 {
+	contact tmp_c;
+	contact* tmp_c_ptr;
+	attribute tmp_attrib;
+	vector_void* attribs;
 	char* tmp_str = NULL;
-	char choice, clean;
-	c_array in;
+	char clean, choice;
 
+	int overwritten = 1;
+	if (contacts->size) {
+		overwritten = 0;
+		puts("Do you want to overwrite current contacts? (Y/N)");
+		choice = read_char(stdin);
+		if (choice == 'y' || choice == 'Y') {
+			clear_void(contacts);
+			overwritten = 1;
+		}
+	}
+
+	
 	puts("Enter the name of a file to load:");
 	READ_STRING(tmp_str, clean);
 
-	if (!file_open_read(tmp_str, "rb", &in)) {
-		perror("Error reading file");
+	FILE* file = fopen(tmp_str, "r");
+	if (!file) {
+		perror("Failed to open file");
 		return;
 	}
+	
+	xml_tree* tree = new_xml_tree();
+	if (!tree || !parse_xml_file(file, tree))
+		return;
 
-	int sz = in.len/sizeof(contact);
-	reserve_void(contacts, sz);
-	contacts->size = sz;
-	memcpy(contacts->a, in.data, in.len);
+	xml_tree* xml_contact, *xml_contact_members;
 
+	list_for_each_entry(xml_contact, xml_tree, &tree->child_list, list) {
+		vec_void(&tmp_c.attribs, 0, 3, sizeof(attribute), free_attribute, NULL);
+		push_void(contacts, &tmp_c);
+		tmp_c_ptr = (contact*)back_void(contacts);
+		attribs = &tmp_c_ptr->attribs;
+
+		list_for_each_entry(xml_contact_members, xml_tree, &xml_contact->child_list, list) {
+			if (!strcmp(xml_contact_members->key, "firstname"))
+				tmp_c_ptr->first = mystrdup(xml_contact_members->value);
+			else if (!strcmp(xml_contact_members->key, "lastname"))
+				tmp_c_ptr->last = mystrdup(xml_contact_members->value);
+			else if (!strcmp(xml_contact_members->key, "phone"))
+				tmp_c_ptr->phone = mystrdup(xml_contact_members->value);
+			else {
+				tmp_attrib.name = mystrdup(xml_contact_members->key);
+				tmp_attrib.value = mystrdup(xml_contact_members->value);
+
+				push_void(attribs, &tmp_attrib);
+			}
+		}
+	}
+
+	free_xml_tree(tree);
+
+	saved = overwritten;
 	puts("Contacts loaded successfully.");
 }
 
@@ -208,7 +274,7 @@ void remove_contact(vector_void* contacts)
 {
 	contact *tmp_c;
 	char* tmp_str = NULL;
-	char choice, clean;
+	char clean;
 
 	puts("Enter the last name of the contact you wish to remove:");
 	READ_STRING(tmp_str, clean);
@@ -217,16 +283,62 @@ void remove_contact(vector_void* contacts)
 		tmp_c = GET_CONTACT(contacts, i);
 		if (!strcmp(tmp_str, tmp_c->last)) {
 			erase_void(contacts, i, i);
+			saved = 0;
 			break;
 		}
 	}
 }
 
-void search_contacts(vector_void* contacts)
+int compare_first(const void* contact1, const void* contact2)
+{
+	contact* c1 = (contact*)contact1;
+	contact* c2 = (contact*)contact2;
+	return strcmp(c1->first, c2->first);
+}
+
+int compare_last(const void* contact1, const void* contact2)
+{
+	contact* c1 = (contact*)contact1;
+	contact* c2 = (contact*)contact2;
+	return strcmp(c1->last, c2->last);
+}
+
+int compare_contact(const void* contact1, const void* contact2)
+{
+	contact* c1 = (contact*)contact1;
+	contact* c2 = (contact*)contact2;
+	int ret = strcmp(c1->last, c2->last);
+	if (!ret)
+		return strcmp(c1->first, c2->first);
+	return ret;
+}
+
+void sort_contacts(vector_void* contacts)
+{
+	char choice;
+	vector_i results;
+	vec_i(&results, 0, contacts->size);
+
+	puts("Do you want to sort by last name, first name or both? (L/F/B)");
+	choice = read_char(stdin);
+	if (choice == 'L' || choice == 'l')
+		qsort(contacts->a, contacts->size, contacts->elem_size, compare_last);
+	else if (choice == 'F' || choice == 'f') 
+		qsort(contacts->a, contacts->size, contacts->elem_size, compare_first);
+	else
+		qsort(contacts->a, contacts->size, contacts->elem_size, compare_contact);
+
+	
+	puts("\nSorted successfully");
+}
+
+void find_contacts(vector_void* contacts)
 {
 	contact *tmp_c;
 	char* tmp_str = NULL;
-	char choice, clean;
+	char clean;
+	vector_i results;
+	vec_i(&results, 0, contacts->size);
 
 	puts("Enter the last name of the contact you wish to find:");
 	READ_STRING(tmp_str, clean);
@@ -235,12 +347,16 @@ void search_contacts(vector_void* contacts)
 	for (i=0; i<contacts->size; ++i) {
 		tmp_c = GET_CONTACT(contacts, i);
 		if (!strcmp(tmp_str, tmp_c->last)) {
-			print_contact(tmp_c);
-			break;
+			push_i(&results, i);
 		}
 	}
-	if (i == contacts->size)
-		puts("No results found");
+
+	printf("\n%d Results Found:\n=================\n", results.size);
+	for (i=0; i<results.size; ++i) {
+		tmp_c = GET_CONTACT(contacts, results.a[i]);
+		print_contact(tmp_c);
+		putchar('\n');
+	}
 }
 
 
@@ -252,6 +368,7 @@ int main(int argc, char** argv)
 	char choice;
 	int quit = 0;	
 	vec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);
+	saved = 0;
 
 	print_menu();
 	while (!quit) {
@@ -286,13 +403,27 @@ int main(int argc, char** argv)
 
 		case 'S':
 		case 's':
-			search_contacts(&contacts);
+			sort_contacts(&contacts);
+			break;
+
+		case 'F':
+		case 'f':
+			find_contacts(&contacts);
 			break;
 
 		case 'Q':
 		case 'q':
-			//add check for unsaved changes
-			quit = 1;
+			//TODO
+			if (!saved) {
+				puts("You have unsaved changes! Are you sure you want to quit? (Y/N)");
+				choice = read_char(stdin);
+				if (choice == 'y' || choice == 'y')
+					quit = 1;
+				else
+					quit = 0;
+			} else {
+				quit = 1;
+			}
 			break;
 
 		case '?':

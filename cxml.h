@@ -3,13 +3,6 @@
 #include <stdio.h>
 #include "clist.h"
 
-struct xml_tree;
-
-typedef union xml_value
-{
-	char* string;
-	struct xml_tree* tree;
-} xml_value;
 
 typedef struct xml_tree
 {
