@@ -103,6 +103,14 @@ int parse_xml_file(FILE* file, xml_tree* tree)
 		STDERR("Mismatched closing tag\n");
 		return 0;
 	}
+
+	if (!tree->is_tree && !tree->value) { //empty element
+		tree->value = calloc(1, 1);
+		if (!tree->value) {
+			perror("Error allocating memory");
+			return 0;
+		}
+	}
 	
 	//free closing tag
 	free(tmp_str);

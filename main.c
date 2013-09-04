@@ -83,6 +83,23 @@ do { \
 	} while (!STR); \
 } while(0)
 
+char* read_string(FILE* file, int allow_empty)
+{
+	char tmp;
+	char* str = NULL;
+
+	do { tmp = getc(file); } while (isspace(tmp));
+	ungetc(tmp, file);
+	do {
+		str = freadline(file);
+		if (!allow_empty && str && !str[0]) {
+			free(str);
+			str = NULL;
+		}
+	} while (!str);
+
+	return str;
+}
 
 
 
@@ -270,24 +287,6 @@ void display_contacts(vector_void* contacts)
 	}
 }
 
-void remove_contact(vector_void* contacts)
-{
-	contact *tmp_c;
-	char* tmp_str = NULL;
-	char clean;
-
-	puts("Enter the last name of the contact you wish to remove:");
-	READ_STRING(tmp_str, clean);
-
-	for (int i=0; i<contacts->size; ++i) {
-		tmp_c = GET_CONTACT(contacts, i);
-		if (!strcmp(tmp_str, tmp_c->last)) {
-			erase_void(contacts, i, i);
-			saved = 0;
-			break;
-		}
-	}
-}
 
 int compare_first(const void* contact1, const void* contact2)
 {
@@ -332,34 +331,90 @@ void sort_contacts(vector_void* contacts)
 	puts("\nSorted successfully");
 }
 
-void find_contacts(vector_void* contacts)
+void find_contacts(vector_void* contacts, vector_i* results_out, int print_results)
 {
 	contact *tmp_c;
-	char* tmp_str = NULL;
-	char clean;
+	char* last = NULL, *first = NULL;
+	char clean, choice;
 	vector_i results;
 	vec_i(&results, 0, contacts->size);
 
-	puts("Enter the last name of the contact you wish to find:");
-	READ_STRING(tmp_str, clean);
-	
+	int both = 0;
+
+	puts("Do you want to search by last name, first name, or both? (L/F/B)");
+	choice = read_char(stdin);
+	if (choice != 'F' && choice != 'f') {
+		puts("Enter the last name:");
+		READ_STRING(last, clean);
+	}
+	if (choice != 'L' && choice != 'l') {
+		puts("Enter the first name:");
+		READ_STRING(first, clean);
+		if (last)
+			both = 1;
+	}
+
 	int i;
 	for (i=0; i<contacts->size; ++i) {
 		tmp_c = GET_CONTACT(contacts, i);
-		if (!strcmp(tmp_str, tmp_c->last)) {
+		if (both && !strcmp(last, tmp_c->last) && !strcmp(first, tmp_c->first)) {
+			push_i(&results, i);
+		} else if (last && !strcmp(last, tmp_c->last)) {
+			push_i(&results, i);
+		} else if (first && !strcmp(first, tmp_c->first)) {
 			push_i(&results, i);
 		}
 	}
 
-	printf("\n%d Results Found:\n=================\n", results.size);
-	for (i=0; i<results.size; ++i) {
-		tmp_c = GET_CONTACT(contacts, results.a[i]);
-		print_contact(tmp_c);
-		putchar('\n');
+	if (print_results) {
+		printf("\n%d Results Found:\n=================\n", results.size);
+		for (i=0; i<results.size; ++i) {
+			tmp_c = GET_CONTACT(contacts, results.a[i]);
+			print_contact(tmp_c);
+			putchar('\n');
+		}
 	}
+
+	if (results_out)
+		memcpy(results_out, &results, sizeof(vector_i));
+	else
+		free_vec_i(&results);
 }
 
 
+void remove_contact(vector_void* contacts)
+{
+	contact *tmp_c;
+	char choice;
+	vector_i results;
+
+	find_contacts(contacts, &results, 0);
+	printf("There were  %d results found\n", results.size);
+	if (!results.size)
+		return;
+
+	qsort(results.a, results.size, sizeof(int), compare_int);
+
+	puts("Do you want to remove them all? (Y/N)");
+	choice = read_char(stdin);
+	if (choice == 'Y' || choice == 'y') {
+		for (int i=results.size-1; i >= 0; --i) {
+			erase_void(contacts, results.a[i], results.a[i]);
+		}
+		saved = 0;
+	} else {
+		for (int i=results.size-1; i >= 0; --i) {
+			tmp_c = GET_CONTACT(contacts, results.a[i]);
+			print_contact(tmp_c);
+			puts("Do you want to remove the above contact? (Y/N)\n");
+			choice = read_char(stdin);
+			if (choice == 'Y' || choice == 'y') {
+				erase_void(contacts, results.a[i], results.a[i]);
+				saved = 0;
+			}
+		}
+	}
+}
 
 
 int main(int argc, char** argv)
@@ -408,7 +463,7 @@ int main(int argc, char** argv)
 
 		case 'F':
 		case 'f':
-			find_contacts(&contacts);
+			find_contacts(&contacts, NULL, 1);
 			break;
 
 		case 'Q':

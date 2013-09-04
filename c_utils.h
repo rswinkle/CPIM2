@@ -67,6 +67,16 @@ int are_equal_ulong(byte* a, byte* b);
 int are_equal_float(byte* a, byte* b);
 int are_equal_double(byte* a, byte* b);
 
+int compare_char(const void* a, const void* b);
+int compare_uchar(const void* a, const void* b);
+int compare_short(const void* a, const void* b);
+int compare_ushort(const void* a, const void* b);
+int compare_int(const void* a, const void* b);
+int compare_uint(const void* a, const void* b);
+int compare_long(const void* a, const void* b);
+int compare_ulong(const void* a, const void* b);
+int compare_float(const void* a, const void* b);
+int compare_double(const void* a, const void* b);
 
 int any(c_array* array, int (*is_true)(byte*));
 int all(c_array* array, int (*is_true)(byte*));
