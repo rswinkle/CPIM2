@@ -25,6 +25,9 @@ void free_xml_tree(xml_tree* tree)
 	list_head* p, *n;
 	xml_tree* tmp_tree;
 
+	if (!tree)
+		return;
+
 	free(tree->key);
 	if (tree->is_tree) {
 		list_for_each_safe(p, n, &tree->child_list) {
