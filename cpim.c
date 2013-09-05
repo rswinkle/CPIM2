@@ -44,31 +44,9 @@ void free_contact(void* tmp)
 	free_vec_void(&c->attribs);
 }
 
-char read_char(FILE* input)
-{
-	char c, ret;
-	do { ret = getc(input); } while (isspace(ret));
-	do { c = getc(input); } while (c != '\n');
-	return ret;
-}
 
-char* read_string(FILE* file, int allow_empty)
-{
-	char tmp;
-	char* str = NULL;
 
-	do { tmp = getc(file); } while (isspace(tmp));
-	ungetc(tmp, file);
-	do {
-		str = freadline(file);
-		if (!allow_empty && str && !str[0]) {
-			free(str);
-			str = NULL;
-		}
-	} while (!str);
 
-	return str;
-}
 
 
 
@@ -81,32 +59,32 @@ void add_contact(vector_void* contacts)
 	char choice;
 
 	puts("Enter first name:");
-	tmp_c.first = read_string(stdin, 1);
+	tmp_c.first = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
 	puts("Enter last name:");
-	tmp_c.last = read_string(stdin, 1);
+	tmp_c.last = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
 	puts("Enter phone number:");
-	tmp_c.phone = read_string(stdin, 1);
+	tmp_c.phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
 	vec_void(&tmp_c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
 	push_void(contacts, &tmp_c);
 	attribs = &((contact*)back_void(contacts))->attribs;
 
-	puts("Do you want to add any attributes? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to add any attributes? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 
 	while (choice == 'Y' || choice == 'y') {
 		puts("Enter attribute name:");
-		tmp_attrib.name = read_string(stdin, 0);
+		tmp_attrib.name = read_string(stdin, SPACE_SET, '\n', 0);
 
 		puts("Enter attribute value:");
-		tmp_attrib.value = read_string(stdin, 1);
+		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
 		push_void(attribs, &tmp_attrib);
 
-		puts("Do you want to add another attribute? (Y/N)");
-		choice = read_char(stdin);
+		puts("Do you want to add another attribute? (y/N)");
+		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 	saved = 0;
 }
@@ -118,7 +96,7 @@ void save_contacts(vector_void* contacts)
 	attribute* a;
 	
 	puts("Enter the name of a file to save to:");
-	tmp_str = read_string(stdin, 0);
+	tmp_str = read_string(stdin, SPACE_SET, '\n', 0);
 
 	FILE* file = fopen(tmp_str, "w");
 	free(tmp_str);
@@ -159,8 +137,8 @@ void load_contacts(vector_void* contacts)
 	int overwritten = 1;
 	if (contacts->size) {
 		overwritten = 0;
-		puts("Do you want to overwrite current contacts? (Y/N)");
-		choice = read_char(stdin);
+		puts("Do you want to overwrite current contacts? (y/N)");
+		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'y' || choice == 'Y') {
 			clear_void(contacts);
 			overwritten = 1;
@@ -168,7 +146,7 @@ void load_contacts(vector_void* contacts)
 	}
 	
 	puts("Enter the name of a file to load:");
-	tmp_str = read_string(stdin, 0);
+	tmp_str = read_string(stdin, SPACE_SET, '\n', 0);
 
 	FILE* file = fopen(tmp_str, "r");
 	free(tmp_str);
@@ -266,11 +244,9 @@ int compare_contact(const void* contact1, const void* contact2)
 void sort_contacts(vector_void* contacts)
 {
 	char choice;
-	vector_i results;
-	vec_i(&results, 0, contacts->size);
 
-	puts("Do you want to sort by last name, first name or both? (L/F/B)");
-	choice = read_char(stdin);
+	puts("Do you want to sort by last name, first name or both? (l/f/B)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'L' || choice == 'l')
 		qsort(contacts->a, contacts->size, contacts->elem_size, compare_last);
 	else if (choice == 'F' || choice == 'f') 
@@ -292,15 +268,15 @@ void find_contacts(vector_void* contacts, vector_i* results_out, int print_resul
 
 	int both = 0;
 
-	puts("Do you want to search by last name, first name, or both? (L/F/B)");
-	choice = read_char(stdin);
+	puts("Do you want to search by last name, first name, or both? (l/f/B)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice != 'F' && choice != 'f') {
 		puts("Enter the last name:");
-		last = read_string(stdin, 1);
+		last = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 	}
 	if (choice != 'L' && choice != 'l') {
 		puts("Enter the first name:");
-		first = read_string(stdin, 1);
+		first = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 		if (last)
 			both = 1;
 	}
@@ -352,8 +328,8 @@ void remove_contact(vector_void* contacts)
 
 	qsort(results.a, results.size, sizeof(int), compare_int);
 
-	puts("Do you want to remove them all? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to remove them all? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=results.size-1; i >= 0; --i) {
 			erase_void(contacts, results.a[i], results.a[i]);
@@ -364,8 +340,8 @@ void remove_contact(vector_void* contacts)
 			tmp_c = GET_CONTACT(contacts, results.a[i]);
 			putchar('\n');
 			print_contact(tmp_c);
-			puts("\nDo you want to remove the above contact? (Y/N)");
-			choice = read_char(stdin);
+			puts("\nDo you want to remove the above contact? (y/N)");
+			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
 				erase_void(contacts, results.a[i], results.a[i]);
 				saved = 0;
@@ -388,57 +364,58 @@ void edit_contact(contact* c, int print_first)
 		putchar('\n');
 	}
 
-	puts("Do you want to edit the first name? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to edit the first name? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		puts("Enter first name:");
 		free(c->first);
-		c->first = read_string(stdin, 1);
+		c->first = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 	}
 
-	puts("Do you want to edit the last name? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to edit the last name? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		puts("Enter last name:");
 		free(c->last);
-		c->last = read_string(stdin, 1);
+		c->last = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 	}
 
-	puts("Do you want to edit the phone number? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to edit the phone number? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		puts("Enter phone number:");
 		free(c->phone);
-		c->phone = read_string(stdin, 1);
+		c->phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 	}
 
 	for (int j=0; j < c->attribs.size; ++j) {
 		a = GET_ATTRIBUTE(&c->attribs, j);
-		printf("Do you want to remove or edit the %s attribute? (R/E/N)\n", a->name);
-		choice = read_char(stdin);
+		printf("Do you want to remove or edit the %s attribute? (r/e/N)\n", a->name);
+		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
 			erase_void(&c->attribs, j, j);
+			--j;
 		} else if (choice == 'E' || choice == 'e') {
 			free(a->value);
 			puts("Enter the new value:");
-			a->value = read_string(stdin, 1);
+			a->value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 		}
 	}
 
-	puts("Do you want to add any attributes? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to add any attributes? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 
 	while (choice == 'Y' || choice == 'y') {
 		puts("Enter attribute name:");
-		tmp_attrib.name = read_string(stdin, 0);
+		tmp_attrib.name = read_string(stdin, SPACE_SET, '\n', 0);
 
 		puts("Enter attribute value:");
-		tmp_attrib.value = read_string(stdin, 1);
+		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
 		push_void(&c->attribs, &tmp_attrib);
 
-		puts("Do you want to add another attribute? (Y/N)");
-		choice = read_char(stdin);
+		puts("Do you want to add another attribute? (y/N)");
+		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 }
 
@@ -454,8 +431,8 @@ void edit_contacts(vector_void* contacts)
 	if (!results.size)
 		goto exit;
 
-	puts("Do you want to edit them all? (Y/N)");
-	choice = read_char(stdin);
+	puts("Do you want to edit them all? (y/N)");
+	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=0; i < results.size; ++i) {
 			tmp_c = GET_CONTACT(contacts, results.a[i]);
@@ -469,8 +446,8 @@ void edit_contacts(vector_void* contacts)
 			putchar('\n');
 			print_contact(tmp_c);
 			putchar('\n');
-			puts("Do you want to edit the above contact? (Y/N)");
-			choice = read_char(stdin);
+			puts("Do you want to edit the above contact? (y/N)");
+			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
 				edit_contact(tmp_c, 0);
 				saved = 0;

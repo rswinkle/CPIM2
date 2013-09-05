@@ -184,9 +184,9 @@ int freadline_into_str(FILE* input, char* str, size_t len)
 	return freadstring_into_str(input, '\n', str, len);
 }
 
-int freadstring_into_str(FILE* input, char delim, char* str, size_t len)
+int freadstring_into_str(FILE* input, int delim, char* str, size_t len)
 {
-	char temp;
+	int temp;
 	int i=0;
 
 	if (feof(input))
@@ -216,10 +216,10 @@ char* freadline(FILE* input)
 	return freadstring(input, '\n', 0);
 }
 
-char* freadstring(FILE* input, char delim, size_t max_len)
+char* freadstring(FILE* input, int delim, size_t max_len)
 {
 	char* string = NULL, *tmp_str = NULL;
-	char temp;
+	int temp;
 	int i=0;
 	int inf = 0;
 
@@ -236,7 +236,7 @@ char* freadstring(FILE* input, char delim, size_t max_len)
 		temp = fgetc(input);
 
 		if (temp == EOF || temp == delim) {
-			if (!i && temp == EOF) {
+			if (!i && temp != delim) { //allow for delim == EOF
 				free(string);
 				return NULL;
 			}
@@ -395,7 +395,53 @@ c_array slice_c_array(c_array array, int start, int end)
 	return a;
 }
 
+/* TODO make skip_chars byte* or u8*? */
+int read_char(FILE* input, char* skip_chars, int complement, int clear_line)
+{
+	int c, ret;
+	byte tmp;
+	c_array skip;
+	char* tmp_skip = (skip_chars) ? skip_chars : "";
 
+	SET_C_ARRAY(skip, (byte*)skip_chars, 1, strlen(tmp_skip));
+
+	do {
+		ret = getc(input);
+		if (ret == EOF)
+			return ret;
+		tmp = ret;
+		c = is_any(&skip, &tmp, are_equal_uchar);
+	} while (!complement && c || complement && !c);
+
+	if (clear_line && ret != '\n')
+		do { c = getc(input); } while (c != '\n' && c != EOF);
+
+	return ret;
+}
+
+char* read_string(FILE* file, char* skip_chars, int delim, size_t max_len)
+{
+	int tmp;
+	byte tmp2;
+	char* str = NULL;
+	c_array skip;
+	str = (skip_chars) ? skip_chars : "";
+
+	SET_C_ARRAY(skip, (byte*)skip_chars, 1, strlen(str));
+
+	do {
+		tmp = getc(file);
+		if (tmp == EOF)
+			return NULL;
+		tmp2 = tmp;
+	} while (is_any(&skip, &tmp2, are_equal_uchar));
+	ungetc(tmp, file);
+	do {
+		str = freadstring(file, delim, max_len);
+	} while (!str);
+
+	return str;
+}
 
 
 int split(c_array* array, byte* delim, size_t delim_len, c_array* out)
@@ -667,10 +713,6 @@ void basic_search(c_array haystack, c_array needle)
 }
 
 
-#define CLEAR_SCREEN "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" \
-                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" \
-                     "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-
 void* mybsearch(const void *key, const void *buf, size_t num, size_t size, int (*compare)(const void *, const void *))
 {
 	size_t min = 0, max = num-1;
@@ -829,51 +871,51 @@ int compare_double(const void* a, const void* b)
 
 
 
-int are_equal_char(byte* a, byte* b)
+int are_equal_char(const void* a, const void* b)
 {
 	return *(char*)a == *(char*)b;
 }
 
-int are_equal_uchar(byte* a, byte* b)
+int are_equal_uchar(const void* a, const void* b)
 {
 	return *(unsigned char*)a == *(unsigned char*)b;
 }
 
-int are_equal_short(byte* a, byte* b)
+int are_equal_short(const void* a, const void* b)
 {
 	return *(short*)a == *(short*)b;
 }
 
-int are_equal_ushort(byte* a, byte* b)
+int are_equal_ushort(const void* a, const void* b)
 {
 	return *(unsigned short*)a == *(unsigned short*)b;
 }
 
-int are_equal_int(byte* a, byte* b)
+int are_equal_int(const void* a, const void* b)
 {
 	return *(int*)a == *(int*)b;
 }
 
-int are_equal_uint(byte* a, byte* b)
+int are_equal_uint(const void* a, const void* b)
 {
 	return *(unsigned int*)a == *(unsigned int*)b;
 }
 
-int are_equal_long(byte* a, byte* b)
+int are_equal_long(const void* a, const void* b)
 {
 	return *(long*)a == *(long*)b;
 }
 
-int are_equal_ulong(byte* a, byte* b)
+int are_equal_ulong(const void* a, const void* b)
 {
 	return *(unsigned long*)a == *(unsigned long*)b;
 }
 
-int are_equal_float(byte* a, byte* b)
+int are_equal_float(const void* a, const void* b)
 {
 	return *(float*)a == *(float*)b;
 }
-int are_equal_double(byte* a, byte* b)
+int are_equal_double(const void* a, const void* b)
 {
 	return *(double*)a == *(double*)b;
 }
@@ -882,7 +924,7 @@ int are_equal_double(byte* a, byte* b)
 //int is_any_array
 
 
-int is_any(c_array* array, byte* the_one, int (*are_equal)(byte*, byte*))
+int is_any(c_array* array, const void* the_one, int (*are_equal)(const void*, const void*))
 {
 	size_t i;
 	for (i=0; i<array->len; ++i) {
@@ -895,7 +937,7 @@ int is_any(c_array* array, byte* the_one, int (*are_equal)(byte*, byte*))
 
 
 
-int any(c_array* array, int (*is_true)(byte*))
+int any(c_array* array, int (*is_true)(const void*))
 {
 	size_t i;
 	for (i=0; i<array->len; ++i) {
@@ -907,7 +949,7 @@ int any(c_array* array, int (*is_true)(byte*))
 }
 
 
-int all(c_array* array, int (*is_true)(byte*))
+int all(c_array* array, int (*is_true)(const void*))
 {
 	size_t i;
 	for (i=0; i<array->len; ++i) {
@@ -919,7 +961,7 @@ int all(c_array* array, int (*is_true)(byte*))
 }
 
 
-void map(c_array* array, void (*func)(byte*))
+void map(c_array* array, void (*func)(const void*))
 {
 	size_t i;
 	for (i=0; i<array->len; ++i) {

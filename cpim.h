@@ -36,19 +36,6 @@ void print_menu();
 void free_attribute(void* tmp);
 void free_contact(void* tmp);
 
-char read_char(FILE* input);
-
-/* define GET_STRING macro */
-#define READ_STRING(STR, CHAR) \
-do { \
-	do { CHAR = getchar(); } while (isspace(CHAR)); \
-	ungetc(CHAR, stdin); \
-	do { \
-		STR = freadline(stdin); \
-	} while (!STR); \
-} while(0)
-
-char* read_string(FILE* file, int allow_empty);
 
 
 

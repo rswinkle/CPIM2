@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	while (!quit) {
 		
 		puts("What action would you like to perform?");
-		choice = read_char(stdin);
+		choice = read_char(stdin, SPACE_SET, 0, 1);
 
 		switch (choice) {
 		case 'A':
@@ -71,8 +71,8 @@ int main(int argc, char** argv)
 		case 'q':
 			//TODO
 			if (!saved) {
-				puts("You have unsaved changes! Are you sure you want to quit? (Y/N)");
-				choice = read_char(stdin);
+				puts("You have unsaved changes! Are you sure you want to quit? (y/N)");
+				choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 				if (choice == 'y' || choice == 'y')
 					quit = 1;
 				else
