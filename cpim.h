@@ -2,6 +2,7 @@
 #define CPIM_H
 
 #include "cvector.h"
+#include "vector_contact.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -9,10 +10,8 @@
 
 #define MAX_STR_LENGTH 30
 
-#define GET_CONTACT(VEC, I) ((contact*)&(VEC)->a[(I)*(VEC)->elem_size])
-#define GET_ATTRIBUTE(VEC, I) ((attribute*)&(VEC)->a[(I)*(VEC)->elem_size])
 
-
+/*
 typedef struct attribute
 {
 	char* name;
@@ -26,7 +25,7 @@ typedef struct contact
 	char* phone;
 	vector_void attribs;
 } contact;
-
+*/
 
 extern int saved;
 
@@ -36,41 +35,28 @@ void print_menu();
 void free_attribute(void* tmp);
 void free_contact(void* tmp);
 
-char read_char(FILE* input);
-
-/* define GET_STRING macro */
-#define READ_STRING(STR, CHAR) \
-do { \
-	do { CHAR = getchar(); } while (isspace(CHAR)); \
-	ungetc(CHAR, stdin); \
-	do { \
-		STR = freadline(stdin); \
-	} while (!STR); \
-} while(0)
-
-char* read_string(FILE* file, int allow_empty);
 
 
 
 
-void add_contact(vector_void* contacts);
-void save_contacts(vector_void* contacts);
-void load_contacts(vector_void* contacts);
+void add_contact(vector_contact* contacts);
+void save_contacts(vector_contact* contacts);
+void load_contacts(vector_contact* contacts);
 
 
 void print_contact(contact* c);
 
-void display_contacts(vector_void* contacts);
+void display_contacts(vector_contact* contacts);
 
 
 int compare_first(const void* contact1, const void* contact2);
 int compare_last(const void* contact1, const void* contact2);
 int compare_contact(const void* contact1, const void* contact2);
 
-void sort_contacts(vector_void* contacts);
-void find_contacts(vector_void* contacts, vector_i* results_out, int print_results);
-void remove_contact(vector_void* contacts);
+void sort_contacts(vector_contact* contacts);
+void find_contacts(vector_contact* contacts, vector_i* results_out, int print_results);
+void remove_contact(vector_contact* contacts);
 void edit_contact(contact* c, int print_first);
-void edit_contacts(vector_void* contacts);
+void edit_contacts(vector_contact* contacts);
 
 #endif

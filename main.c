@@ -1,7 +1,7 @@
 
 #include "cpim.h"
 
-
+#include "vector_contact.h"
 
 //include this before cvector.h for mystrdup
 #include "c_utils.h"
@@ -14,17 +14,17 @@
 
 int main(int argc, char** argv)
 {
-	vector_void contacts;
+	vector_contact contacts;
 	char choice;
 	int quit = 0;	
-	vec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);
+	vec_contact(&contacts, 0, 10);
 	saved = 1;
 
 	print_menu();
 	while (!quit) {
 		
 		puts("What action would you like to perform?");
-		choice = read_char(stdin);
+		choice = read_char(stdin, SPACE_SET, 0, 1);
 
 		switch (choice) {
 		case 'A':
@@ -71,8 +71,8 @@ int main(int argc, char** argv)
 		case 'q':
 			//TODO
 			if (!saved) {
-				puts("You have unsaved changes! Are you sure you want to quit? (Y/N)");
-				choice = read_char(stdin);
+				puts("You have unsaved changes! Are you sure you want to quit? (y/N)");
+				choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 				if (choice == 'y' || choice == 'y')
 					quit = 1;
 				else
@@ -89,7 +89,10 @@ int main(int argc, char** argv)
 		putchar('\n');
 	}
 
-	free_vec_void(&contacts);
+	for (int i=0; i<contacts.size; ++i)
+		free_contact(&contacts.a[i]);
+
+	free_vec_contact(&contacts);
 
 
 	return 0;

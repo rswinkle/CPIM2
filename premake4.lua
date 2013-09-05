@@ -10,7 +10,8 @@ solution "CPIM2"
 			language "C"
 			files {
 				"main.c", "c_utils.c", "c_utils.h", "cvector.h", "cxml.c", "clist.h",
-				"cxml.h", "cpim.c", "cpim.h"
+				"cxml.h", "cpim.c", "cpim.h", "vector_contact.c", "vector_contact.h",
+				"vector_attribute.c", "vector_attribute.h", "contact.h", "attribute.h"
 			}
 --      excludes { "vector_template.*", "cvector.h", "vector_tests2.c" }
 --      libdirs { }
