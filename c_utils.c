@@ -413,7 +413,7 @@ int read_char(FILE* input, char* skip_chars, int complement, int clear_line)
 		c = is_any(&skip, &tmp, are_equal_uchar);
 	} while (!complement && c || complement && !c);
 
-	if (clear_line)
+	if (clear_line && ret != '\n')
 		do { c = getc(input); } while (c != '\n' && c != EOF);
 
 	return ret;
