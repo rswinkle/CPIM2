@@ -293,33 +293,67 @@ static inline int list_is_singular(const list_head *head)
 
 
 
+typedef struct int_list
+{
+	int data;
+	list_head list;
+} int_list;
 
 
 
 
+void list_swap(list_head* p, list_head* q);
+void sort_list(list_head* head, int cmp(list_head*, list_head*));
+
+#endif
 
 
+#ifdef CLIST_IMPLEMENTATION
+
+void list_swap(list_head* p, list_head* q)
+{
+	list_head tmp;
+	tmp = *p;
+
+	p->next = q->next;
+	p->prev = q->prev;
+	p->next->prev = p;
+	p->prev->next = p;
+
+	q->next = tmp.next;
+	q->prev = tmp.prev;
+	q->next->prev = q;
+	q->prev->next = q;
+}
 
 
+void sort_list(list_head* head, int cmp(list_head*, list_head*))
+{
+	list_head* p, *q;
 
+	int swapped, ret;
+	do {
+		swapped = 0;
 
+		for (p = head->next; p->next != head; ) {
+			q = p->next;
+			ret = cmp(p, q);
+			if (ret > 0) {
+				p->next = q->next;
+				p->next->prev = p;
+				q->prev = p->prev;
+				q->prev->next = q;
 
+				p->prev = q;
+				q->next = p;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+				swapped = 1;
+			} else {
+				p = p->next;
+			}
+		}
+	} while (swapped);
+}
 
 
 #endif

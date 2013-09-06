@@ -9,6 +9,10 @@
 #define CVECTOR_IMPLEMENTATION
 #include "cvector.h"
 
+#define CLIST_IMPLEMENTATION
+#include "clist.h"
+
+
 #include <stdio.h>
 
 
