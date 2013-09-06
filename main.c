@@ -1,4 +1,3 @@
-
 #include "cpim.h"
 
 
@@ -6,18 +5,18 @@
 //include this before cvector.h for mystrdup
 #include "c_utils.h"
 
-#define CVECTOR_IMPLEMENTATION
-#include "cvector.h"
+#define CLIST_IMPLEMENTATION
+#include "clist.h"
 
 #include <stdio.h>
 
 
 int main(int argc, char** argv)
 {
-	vector_void contacts;
+	LIST_HEAD(contacts);
+
 	char choice;
 	int quit = 0;	
-	vec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);
 	saved = 1;
 
 	print_menu();
@@ -64,7 +63,7 @@ int main(int argc, char** argv)
 
 		case 'F':
 		case 'f':
-			find_contacts(&contacts, NULL, 1);
+			find_contacts(&contacts, NULL, NULL, 1);
 			break;
 
 		case 'Q':
@@ -89,7 +88,7 @@ int main(int argc, char** argv)
 		putchar('\n');
 	}
 
-	free_vec_void(&contacts);
+	free_contact_list(&contacts);
 
 
 	return 0;
