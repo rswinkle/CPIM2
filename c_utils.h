@@ -3,6 +3,9 @@
 
 #include "basic_types.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <ctype.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +35,7 @@ int file_read(FILE* file, c_array* out);
 int file_open_write(const char* filename, const char* mode, c_array* out);
 int file_write(FILE* file, c_array* out);
 int file_open_readlines(const char* filename, c_array* lines, c_array* file_contents);
+int file_readlines(FILE* file, c_array* lines, c_array* file_contents);
 
 int freadstring_into_str(FILE* input, int delim, char* str, size_t len);
 int freadline_into_str(FILE* input, char* str, size_t len);
@@ -44,7 +48,7 @@ int readline_into_str(c_array* input, char* str, size_t len);
 char* readline(c_array* input);
 char* readstring(c_array* input, char delim, size_t max_len);
 
-int read_char(FILE* input, char* skip_chars, int complement, int clear_line);
+int read_char(FILE* input, const char* skip_chars, int complement, int clear_line);
 
 /* define GET_STRING macro */
 #define READ_STRING(STR, CHAR) \
@@ -56,9 +60,9 @@ do { \
 	} while (!STR); \
 } while(0)
 
-char* read_string(FILE* file, char* skip_chars, int delim, size_t max_len);
+char* read_string(FILE* file, const char* skip_chars, int delim, size_t max_len);
 
-c_array slice_c_array(c_array array, int start, int end);
+c_array slice_c_array(c_array array, long start, long end);
 
 
 int split(c_array* in, byte* delim, size_t delim_len, c_array* out);
@@ -85,17 +89,32 @@ int are_equal_long(const void* a, const void* b);
 int are_equal_ulong(const void* a, const void* b);
 int are_equal_float(const void* a, const void* b);
 int are_equal_double(const void* a, const void* b);
+int are_equal_string(const void* a, const void* b);
 
-int compare_char(const void* a, const void* b);
-int compare_uchar(const void* a, const void* b);
-int compare_short(const void* a, const void* b);
-int compare_ushort(const void* a, const void* b);
-int compare_int(const void* a, const void* b);
-int compare_uint(const void* a, const void* b);
-int compare_long(const void* a, const void* b);
-int compare_ulong(const void* a, const void* b);
-int compare_float(const void* a, const void* b);
-int compare_double(const void* a, const void* b);
+int cmp_char_lt(const void* a, const void* b);
+int cmp_uchar_lt(const void* a, const void* b);
+int cmp_short_lt(const void* a, const void* b);
+int cmp_ushort_lt(const void* a, const void* b);
+int cmp_int_lt(const void* a, const void* b);
+int cmp_uint_lt(const void* a, const void* b);
+int cmp_long_lt(const void* a, const void* b);
+int cmp_ulong_lt(const void* a, const void* b);
+int cmp_float_lt(const void* a, const void* b);
+int cmp_double_lt(const void* a, const void* b);
+int cmp_string_lt(const void* a, const void* b);
+
+int cmp_char_gt(const void* a, const void* b);
+int cmp_uchar_gt(const void* a, const void* b);
+int cmp_short_gt(const void* a, const void* b);
+int cmp_ushort_gt(const void* a, const void* b);
+int cmp_int_gt(const void* a, const void* b);
+int cmp_uint_gt(const void* a, const void* b);
+int cmp_long_gt(const void* a, const void* b);
+int cmp_ulong_gt(const void* a, const void* b);
+int cmp_float_gt(const void* a, const void* b);
+int cmp_double_gt(const void* a, const void* b);
+int cmp_string_gt(const void* a, const void* b);
+
 
 int any(c_array* array, int (*is_true)(const void*));
 int all(c_array* array, int (*is_true)(const void*));
@@ -104,11 +123,16 @@ int is_any(c_array* array, const void* the_one, int (*are_equal)(const void*, co
 void map(c_array* array, void (*func)(const void*));
 
 
-void boyermoore_search(c_array haystack_array, c_array needle_array);
-void basic_search(c_array haystack, c_array needle);
+size_t find(c_array haystack, c_array needle);
 
 
+#define INT_MAX_LEN sizeof(int)*CHAR_BIT
 
+char* int_to_str(int num, int base);
+char* long_to_str(long num, int base);
+
+float rand_float(float min, float max);
+double rand_double(double min, double max);
 
 
 #ifdef __cplusplus
@@ -116,3 +140,4 @@ void basic_search(c_array haystack, c_array needle);
 #endif
 
 #endif
+

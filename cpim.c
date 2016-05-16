@@ -41,7 +41,7 @@ void free_contact(void* tmp)
 	free(c->first);
 	free(c->last);
 	free(c->phone);
-	free_vec_void(&c->attribs);
+	cvec_free_void(&c->attribs);
 }
 
 
@@ -67,9 +67,9 @@ void add_contact(vector_void* contacts)
 	puts("Enter phone number:");
 	tmp_c.phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-	vec_void(&tmp_c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
-	push_void(contacts, &tmp_c);
-	attribs = &((contact*)back_void(contacts))->attribs;
+	cvec_void(&tmp_c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
+	cvec_push_void(contacts, &tmp_c);
+	attribs = &((contact*)cvec_back_void(contacts))->attribs;
 
 	puts("Do you want to add any attributes? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -81,7 +81,7 @@ void add_contact(vector_void* contacts)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		push_void(attribs, &tmp_attrib);
+		cvec_push_void(attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -140,7 +140,7 @@ void load_contacts(vector_void* contacts)
 		puts("Do you want to overwrite current contacts? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'y' || choice == 'Y') {
-			clear_void(contacts);
+			cvec_clear_void(contacts);
 			overwritten = 1;
 		}
 	}
@@ -162,9 +162,9 @@ void load_contacts(vector_void* contacts)
 	xml_tree* xml_contact, *xml_contact_members;
 
 	list_for_each_entry(xml_contact, xml_tree, &tree->child_list, list) {
-		vec_void(&tmp_c.attribs, 0, 3, sizeof(attribute), free_attribute, NULL);
-		push_void(contacts, &tmp_c);
-		tmp_c_ptr = (contact*)back_void(contacts);
+		cvec_void(&tmp_c.attribs, 0, 3, sizeof(attribute), free_attribute, NULL);
+		cvec_push_void(contacts, &tmp_c);
+		tmp_c_ptr = (contact*)cvec_back_void(contacts);
 		attribs = &tmp_c_ptr->attribs;
 
 		list_for_each_entry(xml_contact_members, xml_tree, &xml_contact->child_list, list) {
@@ -178,7 +178,7 @@ void load_contacts(vector_void* contacts)
 				tmp_attrib.name = mystrdup(xml_contact_members->key);
 				tmp_attrib.value = mystrdup(xml_contact_members->value);
 
-				push_void(attribs, &tmp_attrib);
+				cvec_push_void(attribs, &tmp_attrib);
 			}
 		}
 	}
@@ -264,7 +264,7 @@ void find_contacts(vector_void* contacts, vector_i* results_out, int print_resul
 	char* last = NULL, *first = NULL;
 	char choice;
 	vector_i results;
-	vec_i(&results, 0, contacts->size);
+	cvec_i(&results, 0, contacts->size);
 
 	int both = 0;
 
@@ -286,12 +286,12 @@ void find_contacts(vector_void* contacts, vector_i* results_out, int print_resul
 		tmp_c = GET_CONTACT(contacts, i);
 		if (both) {
 			if (!strcmp(last, tmp_c->last) && !strcmp(first, tmp_c->first))
-				push_i(&results, i);
+				cvec_push_i(&results, i);
 		} else if (last) {
 			if (!strcmp(last, tmp_c->last))
-				push_i(&results, i);
+				cvec_push_i(&results, i);
 		} else if (!strcmp(first, tmp_c->first)) {
-			push_i(&results, i);
+			cvec_push_i(&results, i);
 		}
 	}
 
@@ -310,7 +310,7 @@ void find_contacts(vector_void* contacts, vector_i* results_out, int print_resul
 	if (results_out)
 		memcpy(results_out, &results, sizeof(vector_i));
 	else
-		free_vec_i(&results);
+		cvec_free_i(&results);
 }
 
 
@@ -326,13 +326,13 @@ void remove_contact(vector_void* contacts)
 	if (!results.size)
 		goto exit;
 
-	qsort(results.a, results.size, sizeof(int), compare_int);
+	qsort(results.a, results.size, sizeof(int), cmp_int_lt);
 
 	puts("Do you want to remove them all? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=results.size-1; i >= 0; --i) {
-			erase_void(contacts, results.a[i], results.a[i]);
+			cvec_erase_void(contacts, results.a[i], results.a[i]);
 		}
 		saved = 0;
 	} else {
@@ -343,14 +343,14 @@ void remove_contact(vector_void* contacts)
 			puts("\nDo you want to remove the above contact? (y/N)");
 			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
-				erase_void(contacts, results.a[i], results.a[i]);
+				cvec_erase_void(contacts, results.a[i], results.a[i]);
 				saved = 0;
 			}
 		}
 	}
 
 exit:
-	free_vec_i(&results);
+	cvec_free_i(&results);
 }
 
 void edit_contact(contact* c, int print_first)
@@ -393,7 +393,7 @@ void edit_contact(contact* c, int print_first)
 		printf("Do you want to remove or edit the %s attribute? (r/e/N)\n", a->name);
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
-			erase_void(&c->attribs, j, j);
+			cvec_erase_void(&c->attribs, j, j);
 			--j;
 		} else if (choice == 'E' || choice == 'e') {
 			free(a->value);
@@ -412,7 +412,7 @@ void edit_contact(contact* c, int print_first)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		push_void(&c->attribs, &tmp_attrib);
+		cvec_push_void(&c->attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -456,5 +456,5 @@ void edit_contacts(vector_void* contacts)
 	}
 
 exit:
-	free_vec_i(&results);
+	cvec_free_i(&results);
 }
