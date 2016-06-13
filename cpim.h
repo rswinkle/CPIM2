@@ -24,7 +24,7 @@ typedef struct contact
 	char* first;
 	char* last;
 	char* phone;
-	vector_void attribs;
+	cvector_void attribs;
 } contact;
 
 
@@ -40,24 +40,24 @@ void free_contact(void* tmp);
 
 
 
-void add_contact(vector_void* contacts);
-void save_contacts(vector_void* contacts);
-void load_contacts(vector_void* contacts);
+void add_contact(cvector_void* contacts);
+void save_contacts(cvector_void* contacts);
+void load_contacts(cvector_void* contacts);
 
 
 void print_contact(contact* c);
 
-void display_contacts(vector_void* contacts);
+void display_contacts(cvector_void* contacts);
 
 
 int compare_first(const void* contact1, const void* contact2);
 int compare_last(const void* contact1, const void* contact2);
 int compare_contact(const void* contact1, const void* contact2);
 
-void sort_contacts(vector_void* contacts);
-void find_contacts(vector_void* contacts, vector_i* results_out, int print_results);
-void remove_contact(vector_void* contacts);
+void sort_contacts(cvector_void* contacts);
+void find_contacts(cvector_void* contacts, cvector_i* results_out, int print_results);
+void remove_contact(cvector_void* contacts);
 void edit_contact(contact* c, int print_first);
-void edit_contacts(vector_void* contacts);
+void edit_contacts(cvector_void* contacts);
 
 #endif

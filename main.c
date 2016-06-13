@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv)
 {
-	vector_void contacts;
+	cvector_void contacts;
 	char choice;
 	int quit = 0;	
 	cvec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);

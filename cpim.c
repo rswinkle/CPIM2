@@ -51,11 +51,11 @@ void free_contact(void* tmp)
 
 
 
-void add_contact(vector_void* contacts)
+void add_contact(cvector_void* contacts)
 {
 	contact tmp_c;
 	attribute tmp_attrib;
-	vector_void* attribs;
+	cvector_void* attribs;
 	char choice;
 
 	puts("Enter first name:");
@@ -89,7 +89,7 @@ void add_contact(vector_void* contacts)
 	saved = 0;
 }
 
-void save_contacts(vector_void* contacts)
+void save_contacts(cvector_void* contacts)
 {
 	char* tmp_str = NULL;
 	contact* c;
@@ -125,12 +125,12 @@ void save_contacts(vector_void* contacts)
 	puts("Contacts saved successfully.");
 }
 
-void load_contacts(vector_void* contacts)
+void load_contacts(cvector_void* contacts)
 {
 	contact tmp_c;
 	contact* tmp_c_ptr;
 	attribute tmp_attrib;
-	vector_void* attribs;
+	cvector_void* attribs;
 	char* tmp_str = NULL;
 	char choice;
 
@@ -206,7 +206,7 @@ void print_contact(contact* c)
 	}
 }
 
-void display_contacts(vector_void* contacts)
+void display_contacts(cvector_void* contacts)
 {
 	contact* c;
 	for (int i=0; i<contacts->size; ++i) {
@@ -241,7 +241,7 @@ int compare_contact(const void* contact1, const void* contact2)
 	return ret;
 }
 
-void sort_contacts(vector_void* contacts)
+void sort_contacts(cvector_void* contacts)
 {
 	char choice;
 
@@ -258,12 +258,12 @@ void sort_contacts(vector_void* contacts)
 	puts("\nSorted successfully");
 }
 
-void find_contacts(vector_void* contacts, vector_i* results_out, int print_results)
+void find_contacts(cvector_void* contacts, cvector_i* results_out, int print_results)
 {
 	contact *tmp_c;
 	char* last = NULL, *first = NULL;
 	char choice;
-	vector_i results;
+	cvector_i results;
 	cvec_i(&results, 0, contacts->size);
 
 	int both = 0;
@@ -308,17 +308,17 @@ void find_contacts(vector_void* contacts, vector_i* results_out, int print_resul
 	free(last);
 
 	if (results_out)
-		memcpy(results_out, &results, sizeof(vector_i));
+		memcpy(results_out, &results, sizeof(cvector_i));
 	else
 		cvec_free_i(&results);
 }
 
 
-void remove_contact(vector_void* contacts)
+void remove_contact(cvector_void* contacts)
 {
 	contact *tmp_c;
 	char choice;
-	vector_i results;
+	cvector_i results;
 
 	puts("First search for a contact to remove.");
 	find_contacts(contacts, &results, 0);
@@ -419,11 +419,11 @@ void edit_contact(contact* c, int print_first)
 	}
 }
 
-void edit_contacts(vector_void* contacts)
+void edit_contacts(cvector_void* contacts)
 {
 	contact* tmp_c;
 	char choice;
-	vector_i results;
+	cvector_i results;
 
 	puts("First search for a contact to edit.");
 	find_contacts(contacts, &results, 0);
