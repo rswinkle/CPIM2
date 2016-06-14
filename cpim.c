@@ -1,6 +1,4 @@
 #include "cpim.h"
-#include "vector_attribute.h"
-
 #include "cxml.h"
 #include "c_utils.h"
 /*
@@ -8,6 +6,10 @@
  * c_utils is included only in cxml.c
 #include "clist.h"
 */
+
+
+CVEC_NEW_DEFS(contact, RESIZE)
+CVEC_NEW_DEFS(attribute, RESIZE)
 
 int saved;
 
@@ -45,14 +47,14 @@ void free_contact(void* tmp)
 	for (int i=0; i<c->attribs.size; ++i)
 		free_attribute(&c->attribs.a[i]);
 
-	free_vec_attribute(&c->attribs);
+	cvec_free_attribute(&c->attribs);
 }
 
 
 
 
 
-void add_contact(vector_contact* contacts)
+void add_contact(cvector_contact* contacts)
 {
 	contact tmp_c;
 	attribute tmp_attrib;
@@ -67,7 +69,7 @@ void add_contact(vector_contact* contacts)
 	puts("Enter phone number:");
 	tmp_c.phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-	vec_attribute(&tmp_c.attribs, 0, 10);
+	cvec_attribute(&tmp_c.attribs, 0, 10);
 
 	puts("Do you want to add any attributes? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -79,17 +81,17 @@ void add_contact(vector_contact* contacts)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		push_attribute(&tmp_c.attribs, tmp_attrib);
+		cvec_push_attribute(&tmp_c.attribs, tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 
-	push_contact(contacts, tmp_c);
+	cvec_push_contact(contacts, tmp_c);
 	saved = 0;
 }
 
-void save_contacts(vector_contact* contacts)
+void save_contacts(cvector_contact* contacts)
 {
 	char* tmp_str = NULL;
 	contact* c;
@@ -125,7 +127,7 @@ void save_contacts(vector_contact* contacts)
 	puts("Contacts saved successfully.");
 }
 
-void load_contacts(vector_contact* contacts)
+void load_contacts(cvector_contact* contacts)
 {
 	contact tmp_c;
 	attribute tmp_attrib;
@@ -140,7 +142,7 @@ void load_contacts(vector_contact* contacts)
 		if (choice == 'y' || choice == 'Y') {
 			for (int i=0; i<contacts->size; ++i)
 				free_contact(&contacts->a[i]);
-			clear_contact(contacts);
+			cvec_clear_contact(contacts);
 			overwritten = 1;
 		}
 	}
@@ -162,7 +164,7 @@ void load_contacts(vector_contact* contacts)
 	xml_tree* xml_contact, *xml_contact_members;
 
 	list_for_each_entry(xml_contact, xml_tree, &tree->child_list, list) {
-		vec_attribute(&tmp_c.attribs, 0, 3);
+		cvec_attribute(&tmp_c.attribs, 0, 3);
 
 		list_for_each_entry(xml_contact_members, xml_tree, &xml_contact->child_list, list) {
 			if (!strcmp(xml_contact_members->key, "firstname"))
@@ -175,10 +177,10 @@ void load_contacts(vector_contact* contacts)
 				tmp_attrib.name = mystrdup(xml_contact_members->key);
 				tmp_attrib.value = mystrdup(xml_contact_members->value);
 
-				push_attribute(&tmp_c.attribs, tmp_attrib);
+				cvec_push_attribute(&tmp_c.attribs, tmp_attrib);
 			}
 		}
-		push_contact(contacts, tmp_c);
+		cvec_push_contact(contacts, tmp_c);
 	}
 
 	puts("Contacts loaded successfully.");
@@ -204,7 +206,7 @@ void print_contact(contact* c)
 	}
 }
 
-void display_contacts(vector_contact* contacts)
+void display_contacts(cvector_contact* contacts)
 {
 	for (int i=0; i<contacts->size; ++i) {
 		print_contact(&contacts->a[i]);
@@ -237,7 +239,7 @@ int compare_contact(const void* contact1, const void* contact2)
 	return ret;
 }
 
-void sort_contacts(vector_contact* contacts)
+void sort_contacts(cvector_contact* contacts)
 {
 	char choice;
 
@@ -253,13 +255,13 @@ void sort_contacts(vector_contact* contacts)
 	puts("\nSorted successfully");
 }
 
-void find_contacts(vector_contact* contacts, vector_i* results_out, int print_results)
+void find_contacts(cvector_contact* contacts, cvector_i* results_out, int print_results)
 {
 	contact *tmp_c;
 	char* last = NULL, *first = NULL;
 	char choice;
-	vector_i results;
-	vec_i(&results, 0, contacts->size);
+	cvector_i results;
+	cvec_i(&results, 0, contacts->size);
 
 	int both = 0;
 
@@ -281,12 +283,12 @@ void find_contacts(vector_contact* contacts, vector_i* results_out, int print_re
 		tmp_c = &contacts->a[i];
 		if (both) {
 			if (!strcmp(last, tmp_c->last) && !strcmp(first, tmp_c->first))
-				push_i(&results, i);
+				cvec_push_i(&results, i);
 		} else if (last) {
 			if (!strcmp(last, tmp_c->last))
-				push_i(&results, i);
+				cvec_push_i(&results, i);
 		} else if (!strcmp(first, tmp_c->first)) {
-			push_i(&results, i);
+			cvec_push_i(&results, i);
 		}
 	}
 
@@ -302,16 +304,16 @@ void find_contacts(vector_contact* contacts, vector_i* results_out, int print_re
 	free(last);
 
 	if (results_out)
-		memcpy(results_out, &results, sizeof(vector_i));
+		memcpy(results_out, &results, sizeof(cvector_i));
 	else
-		free_vec_i(&results);
+		cvec_free_i(&results);
 }
 
 
-void remove_contact(vector_contact* contacts)
+void remove_contact(cvector_contact* contacts)
 {
 	char choice;
-	vector_i results;
+	cvector_i results;
 
 	puts("First search for a contact to remove.");
 	find_contacts(contacts, &results, 0);
@@ -326,7 +328,7 @@ void remove_contact(vector_contact* contacts)
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=results.size-1; i >= 0; --i) {
 			free_contact(&contacts->a[results.a[i]]);
-			erase_contact(contacts, results.a[i], results.a[i]);
+			cvec_erase_contact(contacts, results.a[i], results.a[i]);
 		}
 		saved = 0;
 	} else {
@@ -337,14 +339,14 @@ void remove_contact(vector_contact* contacts)
 			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
 				free_contact(&contacts->a[results.a[i]]);
-				erase_contact(contacts, results.a[i], results.a[i]);
+				cvec_erase_contact(contacts, results.a[i], results.a[i]);
 				saved = 0;
 			}
 		}
 	}
 
 exit:
-	free_vec_i(&results);
+	cvec_free_i(&results);
 }
 
 void edit_contact(contact* c, int print_first)
@@ -388,7 +390,7 @@ void edit_contact(contact* c, int print_first)
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
 			free_attribute(&c->attribs.a[j]);
-			erase_attribute(&c->attribs, j, j);
+			cvec_erase_attribute(&c->attribs, j, j);
 			--j;
 		} else if (choice == 'E' || choice == 'e') {
 			free(a->value);
@@ -407,18 +409,18 @@ void edit_contact(contact* c, int print_first)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		push_attribute(&c->attribs, tmp_attrib);
+		cvec_push_attribute(&c->attribs, tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 }
 
-void edit_contacts(vector_contact* contacts)
+void edit_contacts(cvector_contact* contacts)
 {
 	contact* tmp_c;
 	char choice;
-	vector_i results;
+	cvector_i results;
 
 	puts("First search for a contact to edit.");
 	find_contacts(contacts, &results, 0);
@@ -450,5 +452,5 @@ void edit_contacts(vector_contact* contacts)
 	}
 
 exit:
-	free_vec_i(&results);
+	cvec_free_i(&results);
 }

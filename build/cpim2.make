@@ -69,8 +69,6 @@ OBJECTS := \
 	$(OBJDIR)/cpim.o \
 	$(OBJDIR)/cxml.o \
 	$(OBJDIR)/main.o \
-	$(OBJDIR)/vector_attribute.o \
-	$(OBJDIR)/vector_contact.o \
 
 RESOURCES := \
 
@@ -138,12 +136,6 @@ $(OBJDIR)/cxml.o: ../cxml.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: ../main.c
-	@echo $(notdir $<)
-	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/vector_attribute.o: ../vector_attribute.c
-	@echo $(notdir $<)
-	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/vector_contact.o: ../vector_contact.c
 	@echo $(notdir $<)
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

@@ -2,7 +2,6 @@
 #define CPIM_H
 
 #include "cvector.h"
-#include "vector_contact.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -11,21 +10,30 @@
 #define MAX_STR_LENGTH 30
 
 
-/*
 typedef struct attribute
 {
 	char* name;
 	char* value;
 } attribute;
 
+CVEC_NEW_DECLS(attribute)
+
 typedef struct contact
 {
 	char* first;
 	char* last;
 	char* phone;
-	vector_void attribs;
+	cvector_attribute attribs;
 } contact;
-*/
+
+
+#define RESIZE(a) ((a)*2)
+
+CVEC_NEW_DECLS(contact)
+
+
+
+
 
 extern int saved;
 
@@ -39,24 +47,24 @@ void free_contact(void* tmp);
 
 
 
-void add_contact(vector_contact* contacts);
-void save_contacts(vector_contact* contacts);
-void load_contacts(vector_contact* contacts);
+void add_contact(cvector_contact* contacts);
+void save_contacts(cvector_contact* contacts);
+void load_contacts(cvector_contact* contacts);
 
 
 void print_contact(contact* c);
 
-void display_contacts(vector_contact* contacts);
+void display_contacts(cvector_contact* contacts);
 
 
 int compare_first(const void* contact1, const void* contact2);
 int compare_last(const void* contact1, const void* contact2);
 int compare_contact(const void* contact1, const void* contact2);
 
-void sort_contacts(vector_contact* contacts);
-void find_contacts(vector_contact* contacts, vector_i* results_out, int print_results);
-void remove_contact(vector_contact* contacts);
+void sort_contacts(cvector_contact* contacts);
+void find_contacts(cvector_contact* contacts, cvector_i* results_out, int print_results);
+void remove_contact(cvector_contact* contacts);
 void edit_contact(contact* c, int print_first);
-void edit_contacts(vector_contact* contacts);
+void edit_contacts(cvector_contact* contacts);
 
 #endif

@@ -1,8 +1,6 @@
 
 #include "cpim.h"
 
-#include "vector_contact.h"
-
 //include this before cvector.h for mystrdup
 #include "c_utils.h"
 
@@ -18,10 +16,10 @@
 
 int main(int argc, char** argv)
 {
-	vector_contact contacts;
+	cvector_contact contacts;
 	char choice;
-	int quit = 0;	
-	vec_contact(&contacts, 0, 10);
+	int quit = 0;
+	cvec_contact(&contacts, 0, 10);
 	saved = 1;
 
 	print_menu();
@@ -96,7 +94,7 @@ int main(int argc, char** argv)
 	for (int i=0; i<contacts.size; ++i)
 		free_contact(&contacts.a[i]);
 
-	free_vec_contact(&contacts);
+	cvec_free_contact(&contacts);
 
 
 	return 0;
