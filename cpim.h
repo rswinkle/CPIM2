@@ -16,7 +16,7 @@ typedef struct attribute
 	char* value;
 } attribute;
 
-CVEC_NEW_DECLS(attribute)
+CVEC_NEW_DECLS2(attribute)
 
 typedef struct contact
 {
@@ -29,7 +29,7 @@ typedef struct contact
 
 #define RESIZE(a) ((a)*2)
 
-CVEC_NEW_DECLS(contact)
+CVEC_NEW_DECLS2(contact)
 
 
 

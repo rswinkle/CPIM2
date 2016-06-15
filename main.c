@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 	cvector_contact contacts;
 	char choice;
 	int quit = 0;
-	cvec_contact(&contacts, 0, 10);
+	cvec_contact(&contacts, 0, 10, free_contact, NULL);
 	saved = 1;
 
 	print_menu();
@@ -90,9 +90,6 @@ int main(int argc, char** argv)
 		}
 		putchar('\n');
 	}
-
-	for (int i=0; i<contacts.size; ++i)
-		free_contact(&contacts.a[i]);
 
 	cvec_free_contact(&contacts);
 

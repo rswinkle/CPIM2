@@ -8,8 +8,8 @@
 */
 
 
-CVEC_NEW_DEFS(contact, RESIZE)
-CVEC_NEW_DEFS(attribute, RESIZE)
+CVEC_NEW_DEFS2(contact, RESIZE)
+CVEC_NEW_DEFS2(attribute, RESIZE)
 
 int saved;
 
@@ -44,8 +44,6 @@ void free_contact(void* tmp)
 	free(c->first);
 	free(c->last);
 	free(c->phone);
-	for (int i=0; i<c->attribs.size; ++i)
-		free_attribute(&c->attribs.a[i]);
 
 	cvec_free_attribute(&c->attribs);
 }
@@ -69,7 +67,7 @@ void add_contact(cvector_contact* contacts)
 	puts("Enter phone number:");
 	tmp_c.phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-	cvec_attribute(&tmp_c.attribs, 0, 10);
+	cvec_attribute(&tmp_c.attribs, 0, 10, free_attribute, NULL);
 
 	puts("Do you want to add any attributes? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -81,13 +79,13 @@ void add_contact(cvector_contact* contacts)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		cvec_push_attribute(&tmp_c.attribs, tmp_attrib);
+		cvec_push_attribute(&tmp_c.attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 
-	cvec_push_contact(contacts, tmp_c);
+	cvec_push_contact(contacts, &tmp_c);
 	saved = 0;
 }
 
@@ -140,8 +138,6 @@ void load_contacts(cvector_contact* contacts)
 		puts("Do you want to overwrite current contacts? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'y' || choice == 'Y') {
-			for (int i=0; i<contacts->size; ++i)
-				free_contact(&contacts->a[i]);
 			cvec_clear_contact(contacts);
 			overwritten = 1;
 		}
@@ -164,7 +160,7 @@ void load_contacts(cvector_contact* contacts)
 	xml_tree* xml_contact, *xml_contact_members;
 
 	list_for_each_entry(xml_contact, xml_tree, &tree->child_list, list) {
-		cvec_attribute(&tmp_c.attribs, 0, 3);
+		cvec_attribute(&tmp_c.attribs, 0, 3, free_attribute, NULL);
 
 		list_for_each_entry(xml_contact_members, xml_tree, &xml_contact->child_list, list) {
 			if (!strcmp(xml_contact_members->key, "firstname"))
@@ -177,10 +173,10 @@ void load_contacts(cvector_contact* contacts)
 				tmp_attrib.name = mystrdup(xml_contact_members->key);
 				tmp_attrib.value = mystrdup(xml_contact_members->value);
 
-				cvec_push_attribute(&tmp_c.attribs, tmp_attrib);
+				cvec_push_attribute(&tmp_c.attribs, &tmp_attrib);
 			}
 		}
-		cvec_push_contact(contacts, tmp_c);
+		cvec_push_contact(contacts, &tmp_c);
 	}
 
 	puts("Contacts loaded successfully.");
@@ -327,7 +323,6 @@ void remove_contact(cvector_contact* contacts)
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=results.size-1; i >= 0; --i) {
-			free_contact(&contacts->a[results.a[i]]);
 			cvec_erase_contact(contacts, results.a[i], results.a[i]);
 		}
 		saved = 0;
@@ -338,7 +333,6 @@ void remove_contact(cvector_contact* contacts)
 			puts("\nDo you want to remove the above contact? (y/N)");
 			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
-				free_contact(&contacts->a[results.a[i]]);
 				cvec_erase_contact(contacts, results.a[i], results.a[i]);
 				saved = 0;
 			}
@@ -389,7 +383,6 @@ void edit_contact(contact* c, int print_first)
 		printf("Do you want to remove or edit the %s attribute? (r/e/N)\n", a->name);
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
-			free_attribute(&c->attribs.a[j]);
 			cvec_erase_attribute(&c->attribs, j, j);
 			--j;
 		} else if (choice == 'E' || choice == 'e') {
@@ -409,7 +402,7 @@ void edit_contact(contact* c, int print_first)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		cvec_push_attribute(&c->attribs, tmp_attrib);
+		cvec_push_attribute(&c->attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
