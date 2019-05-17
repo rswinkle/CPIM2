@@ -19,11 +19,12 @@ solution "CPIM2"
 	
 		configuration "Debug"
 			defines { "DEBUG" }
-			flags { "Symbols" }
+			symbols "On"
 
 		configuration "Release"
 			defines { "NDEBUG" }
-			flags { "Optimize" }
+			symbols "Off"
+			optimize "On"
 
 		configuration { "linux", "gmake" }
 			buildoptions { "-std=c99", "-pedantic-errors", "-fno-strict-aliasing", "-Wunused-variable", "-Wreturn-type" }
