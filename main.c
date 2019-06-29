@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 	LIST_HEAD(contacts);
 
 	char choice;
-	int quit = 0;	
+	int quit = 0;
 	saved = 1;
 
 	print_menu();

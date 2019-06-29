@@ -9,21 +9,20 @@ solution "CPIM2"
 			kind "ConsoleApp"
 			language "C"
 			files {
-				"main.c", "c_utils.c", "c_utils.h", "cvector.h", "cxml.c", "clist.h",
+				"main.c", "c_utils.c", "c_utils.h", "cxml.c", "clist.h",
 				"cxml.h", "cpim.c", "cpim.h"
 			}
---      excludes { "vector_template.*", "cvector.h", "vector_tests2.c" }
 --      libdirs { }
 --      links { "cunit" }
 		targetdir "build"
 	
 		configuration "Debug"
 			defines { "DEBUG" }
-			flags { "Symbols" }
+			symbols "On"
 
 		configuration "Release"
 			defines { "NDEBUG" }
-			flags { "Optimize" }
+			symbols "Off"
 
 		configuration { "linux", "gmake" }
 			buildoptions { "-std=c99", "-pedantic-errors", "-fno-strict-aliasing", "-Wunused-variable", "-Wreturn-type" }
