@@ -12,7 +12,6 @@ solution "CPIM2"
 				"main.c", "c_utils.c", "c_utils.h", "cvector.h", "cxml.c", "clist.h",
 				"cxml.h", "cpim.c", "cpim.h"
 			}
---      excludes { "vector_template.*", "cvector.h", "vector_tests2.c" }
 --      libdirs { }
 --      links { "cunit" }
 		targetdir "build"
