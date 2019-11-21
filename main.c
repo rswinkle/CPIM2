@@ -12,6 +12,7 @@
 #define CLIST_IMPLEMENTATION
 #include "clist.h"
 
+#include <sqlite3.h>
 
 #include <stdio.h>
 
@@ -20,9 +21,12 @@ int main(int argc, char** argv)
 {
 	cvector_void contacts;
 	char choice;
-	int quit = 0;	
+	int quit = 0;
 	cvec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);
 	saved = 1;
+
+
+	
 
 	print_menu();
 	while (!quit) {
