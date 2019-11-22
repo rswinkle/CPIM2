@@ -13,7 +13,7 @@ solution "CPIM2"
 				"cxml.h", "cpim.c", "cpim.h"
 			}
 --      libdirs { }
---      links { "cunit" }
+		links { "sqlite3" }
 		targetdir "build"
 	
 		configuration "Debug"

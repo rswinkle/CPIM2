@@ -5,6 +5,9 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdint.h>
+
+#include <sqlite3.h>
 
 
 #define MAX_STR_LENGTH 30
@@ -12,6 +15,14 @@
 #define GET_CONTACT(VEC, I) ((contact*)&(VEC)->a[(I)*(VEC)->elem_size])
 #define GET_ATTRIBUTE(VEC, I) ((attribute*)&(VEC)->a[(I)*(VEC)->elem_size])
 
+enum {
+	NONE,
+	LINE,
+	BLOCK
+};
+
+
+typedef int64_t i64;
 
 typedef struct attribute
 {
@@ -21,7 +32,9 @@ typedef struct attribute
 
 typedef struct contact
 {
+	i64 id;
 	char* first;
+	char* middle;
 	char* last;
 	char* phone;
 	cvector_void attribs;
@@ -37,27 +50,22 @@ void free_attribute(void* tmp);
 void free_contact(void* tmp);
 
 
+// combine with open/close in init_db/shutdown_db
+void create_table(sqlite3* db);
+void prepare_stmts(sqlite3* db);
+void finalize_stmts();
 
 
 
-void add_contact(cvector_void* contacts);
-void save_contacts(cvector_void* contacts);
-void load_contacts(cvector_void* contacts);
-
+void add_contact(sqlite3* db);
 
 void print_contact(contact* c);
 
-void display_contacts(cvector_void* contacts);
+void display_contacts();
 
-
-int compare_first(const void* contact1, const void* contact2);
-int compare_last(const void* contact1, const void* contact2);
-int compare_contact(const void* contact1, const void* contact2);
-
-void sort_contacts(cvector_void* contacts);
-void find_contacts(cvector_void* contacts, cvector_i* results_out, int print_results);
-void remove_contact(cvector_void* contacts);
-void edit_contact(contact* c, int print_first);
-void edit_contacts(cvector_void* contacts);
+int find_contacts(sqlite3* db, cvector_i* results, int print);
+void remove_contact(sqlite3* db);
+void edit_contact(int id, int print_first);
+void edit_contacts(sqlite3* db);
 
 #endif

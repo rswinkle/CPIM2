@@ -19,14 +19,30 @@
 
 int main(int argc, char** argv)
 {
-	cvector_void contacts;
 	char choice;
 	int quit = 0;
-	cvec_void(&contacts, 0, 10, sizeof(contact), free_contact, NULL);
-	saved = 1;
 
+	sqlite3* db;
 
-	
+	char default_db[] = "contacts.db";
+	char* db_file = default_db;
+
+	if (argc > 2) {
+		printf("usage: %s [sqlite_database]\n", argv[0]);
+		puts("The provided database will be opened (created if it doesn't exist).)");
+		puts("If no database is provided contacts.db will opened/created");
+		return 0;
+	} else if (argc == 2) {
+		db_file = argv[1];
+	}
+
+	if (sqlite3_open(db_file, &db)) {
+		printf("Failed to open %s: %s\n", db_file, sqlite3_errmsg(db));
+		return 0;
+	}
+
+	create_table(db);
+	prepare_stmts(db);
 
 	print_menu();
 	while (!quit) {
@@ -37,19 +53,20 @@ int main(int argc, char** argv)
 		switch (choice) {
 		case 'A':
 		case 'a':
-			add_contact(&contacts);
+			add_contact(db);
 			break;
 
 		case 'D':
 		case 'd':
-			display_contacts(&contacts);
+			display_contacts();
 			break;
 
 		case 'E':
 		case 'e':
-			edit_contacts(&contacts);
+			edit_contacts(db);
 			break;
 
+			/*
 		case 'V':
 		case 'v':
 			save_contacts(&contacts);
@@ -59,35 +76,21 @@ int main(int argc, char** argv)
 		case 'l':
 			load_contacts(&contacts);
 			break;
+			*/
 
 		case 'R':
 		case 'r':
-			remove_contact(&contacts);
-			break;
-
-		case 'S':
-		case 's':
-			sort_contacts(&contacts);
+			remove_contact(db);
 			break;
 
 		case 'F':
 		case 'f':
-			find_contacts(&contacts, NULL, 1);
+			find_contacts(db, NULL, LINE);
 			break;
 
 		case 'Q':
 		case 'q':
-			//TODO
-			if (!saved) {
-				puts("You have unsaved changes! Are you sure you want to quit? (y/N)");
-				choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
-				if (choice == 'y' || choice == 'y')
-					quit = 1;
-				else
-					quit = 0;
-			} else {
-				quit = 1;
-			}
+			quit = 1;
 			break;
 
 		case '?':
@@ -97,7 +100,8 @@ int main(int argc, char** argv)
 		putchar('\n');
 	}
 
-	cvec_free_void(&contacts);
+	finalize_stmts();
+	sqlite3_close(db);
 
 
 	return 0;

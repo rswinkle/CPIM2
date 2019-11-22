@@ -11,6 +11,7 @@ typedef int64_t i64;
 enum {
 	CREATE_TABLE,
 	INSERT,
+	SELECT_ALL,
 	SELECT_LAST,
 	SELECT_FIRST_LAST,
 	DEL_ID,
@@ -35,7 +36,8 @@ int main()
 		"INSERT INTO contacts (first, middle, last, phone, attribs) "
 			"VALUES (?, ?, ?, ?, ?);",
 
-		"SELECT * FROM contacts WHERE last = ?;",
+		"SELECT * FROM contacts order by last;",
+		"SELECT * FROM contacts WHERE last = ? order by last;",
 		"SELECT * FROM contacts WHERE first = ? and last = ?;",
 
 		"DELETE FROM contacts WHERE id = ?;",
@@ -88,27 +90,28 @@ int main()
 	}
 
 
-	sqlite3_stmt* sel_last;
-	if (sqlite3_prepare_v2(db, sql[SELECT_LAST], -1, &sel_last, NULL)) {
+	sqlite3_stmt* sel_all;
+	if (sqlite3_prepare_v2(db, sql[SELECT_ALL], -1, &sel_all, NULL)) {
 		printf("Failed to prep sel_last: %s\n", sqlite3_errmsg(db));
 		return 0;
 	}
 
-	sqlite3_bind_text(sel_last, 1, "Winkler", -1, SQLITE_STATIC);
+	//sqlite3_bind_text(sel_last, 1, "Winkler", -1, SQLITE_STATIC);
 
 	i64 id;
 	char* first, *middle, *last, *phone;
-	while ((rc = sqlite3_step(sel_last)) == SQLITE_ROW) {
+	const char fmt[] = "%-10ld%-15s%-15s%-15s%-15s\n";
+	const char fmt_hd[] = "%-10s%-15s%-15s%-15s%-15s\n";
+	printf(fmt_hd, "id", "last", "first", "middle", "phone");
+	puts("===================================================================");
+	while ((rc = sqlite3_step(sel_all)) == SQLITE_ROW) {
 			id = sqlite3_column_int64(sel_last, 0);
 			first = sqlite3_column_text(sel_last, 1);
 			middle = sqlite3_column_text(sel_last, 2);
 			last = sqlite3_column_text(sel_last, 3);
 			phone = sqlite3_column_text(sel_last, 4);
 
-			printf("Last Name: %s\n", last);
-			printf("First Name: %s\n", first);
-			printf("Middle Name: %s\n", middle);
-			printf("Phone Number: %s\n\n",phone);
+			printf(fmt, id, last, first, middle, phone);
 	}
 
 
