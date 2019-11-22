@@ -36,13 +36,7 @@ int main(int argc, char** argv)
 		db_file = argv[1];
 	}
 
-	if (sqlite3_open(db_file, &db)) {
-		printf("Failed to open %s: %s\n", db_file, sqlite3_errmsg(db));
-		return 0;
-	}
-
-	create_table(db);
-	prepare_stmts(db);
+	init_db(db_file, &db);
 
 	print_menu();
 	while (!quit) {
@@ -100,8 +94,7 @@ int main(int argc, char** argv)
 		putchar('\n');
 	}
 
-	finalize_stmts();
-	sqlite3_close(db);
+	shutdown_db(db);
 
 
 	return 0;

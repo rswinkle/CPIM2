@@ -41,7 +41,6 @@ typedef struct contact
 } contact;
 
 
-extern int saved;
 
 /* puts adds a newline ... change all to fputs for consistency? */
 void print_menu();
@@ -50,11 +49,12 @@ void free_attribute(void* tmp);
 void free_contact(void* tmp);
 
 
-// combine with open/close in init_db/shutdown_db
 void create_table(sqlite3* db);
 void prepare_stmts(sqlite3* db);
 void finalize_stmts();
 
+void init_db(const char* db_file, sqlite3** db);
+void shutdown_db(sqlite3* db);
 
 
 void add_contact(sqlite3* db);

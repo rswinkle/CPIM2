@@ -53,6 +53,25 @@ const char* sql[] = {
 
 sqlite3_stmt* sqlstmts[NUM_STMTS];
 
+// TODO make db a static global in here?
+// so main doesn't have to know about it and it doesn't have
+// to be passed as a parameter
+
+void init_db(const char* db_file, sqlite3** db)
+{
+	if (sqlite3_open(db_file, db)) {
+		printf("Failed to open %s: %s\n", db_file, sqlite3_errmsg(*db));
+		exit(0);
+	}
+	create_table(*db);
+	prepare_stmts(*db);
+}
+
+void shutdown_db(sqlite3* db)
+{
+	finalize_stmts();
+	sqlite3_close(db);
+}
 
 void create_table(sqlite3* db)
 {
