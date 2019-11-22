@@ -9,9 +9,6 @@
 #define CVECTOR_IMPLEMENTATION
 #include "cvector.h"
 
-#define CLIST_IMPLEMENTATION
-#include "clist.h"
-
 #include <sqlite3.h>
 
 #include <stdio.h>
@@ -59,18 +56,6 @@ int main(int argc, char** argv)
 		case 'e':
 			edit_contacts(db);
 			break;
-
-			/*
-		case 'V':
-		case 'v':
-			save_contacts(&contacts);
-			break;
-
-		case 'L':
-		case 'l':
-			load_contacts(&contacts);
-			break;
-			*/
 
 		case 'R':
 		case 'r':

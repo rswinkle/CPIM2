@@ -1,6 +1,5 @@
 #include "cpim.h"
 
-#include "cxml.h"
 #include "c_utils.h"
 
 
@@ -140,12 +139,34 @@ void free_contact(void* tmp)
 	cvec_free_void(&c->attribs);
 }
 
+int parse_attr_str(char* attr_str, cvector_void* attribs)
+{
+	//printf("attr_str = \"%s\"\n", attr_str);
+	attribute tmp_attrib;
+	// could use split() from c_utils...
+	// e = end/delim, b = beginning
+	char* e, *b = attr_str;
+	while ((e = strchr(b, '\n'))) {
+		tmp_attrib.name = calloc(e-b+1, 1);
+		memcpy(tmp_attrib.name, b, e-b);
 
+		b = e+1;
+		if (!(e = strchr(b, '\n'))) {
+			printf("attribute %s missing value\n", tmp_attrib.name);
+			free(tmp_attrib.name);
+			break;
+		}
 
+		tmp_attrib.value = calloc(e-b+1, 1);
+		memcpy(tmp_attrib.value, b, e-b);
 
+		cvec_push_void(attribs, &tmp_attrib);
 
+		b = e+1;
+	}
 
-
+	return 1;
+}
 
 void add_contact(sqlite3* db)
 {
@@ -189,21 +210,45 @@ void add_contact(sqlite3* db)
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
-	/*
-	 *  TODO
-	 *  // convert to snprintf so I can insert string into attribs column
-		for (int j=0; j<c->attribs.size; ++j) {
-			a = GET_ATTRIBUTE(&c->attribs, j);
-			fprintf(file, "\t\t<%s>%s</%s>\n", a->name, a->value, a->name);
+
+#define BUF_SZ 4096
+	int cap = BUF_SZ;
+	char* attr_str = malloc(cap);
+	attribute* a;
+	int sz = 0;
+	int ret;
+	char* tmp;
+
+	// not using xml because it's overkill and because we're reading from the terminal
+	// and delimited by '\n' we know they can't enter a '\n' as part of either the name or value
+	//
+	// If I were to wrap a gui around this and give them a way to enter arbitrary text
+	// I'd have to go back to some more structured format, maybe look into a json library
+	for (int j=0; j<attribs.size; ++j) {
+		a = GET_ATTRIBUTE(&attribs, j);
+		ret = snprintf(&attr_str[sz], BUF_SZ-sz, "%s\n%s\n", a->name, a->value);
+		if (ret >= BUF_SZ-sz) {
+			cap *= 2;
+			if (!(tmp = realloc(attr_str, cap))) {
+				// TODO check/handle all memory allocations?
+				puts("out of memory!");
+				exit(0);
+			}
+			attr_str = tmp;
+			ret = snprintf(&attr_str[sz], BUF_SZ-sz, "%s\n%s\n", a->name, a->value);
 		}
-	*/
+
+		sz += ret;
+	}
+
+	//printf("attr_str = \"%s\"\n", attr_str);
 
 	sqlite3_stmt* s = sqlstmts[INSERT];
 	sqlite3_bind_text(s, 1, first, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 2, middle, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 3, last, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 4, phone, -1, SQLITE_STATIC);
-	sqlite3_bind_text(s, 5, "", -1, SQLITE_STATIC);
+	sqlite3_bind_text(s, 5, attr_str, -1, SQLITE_STATIC);
 	int rc;
 	if ((rc = sqlite3_step(sqlstmts[INSERT])) != SQLITE_DONE) {
 		printf("Failed to insert (%d): %s\n", rc, sqlite3_errmsg(db));
@@ -216,6 +261,7 @@ void add_contact(sqlite3* db)
 	free(last);
 	free(middle);
 	free(phone);
+	free(attr_str);
 
 	cvec_free_void(&attribs);
 
@@ -223,81 +269,12 @@ void add_contact(sqlite3* db)
 }
 
 
-/*
-void load_contacts(cvector_void* contacts)
-{
-	contact tmp_c;
-	contact* tmp_c_ptr;
-	attribute tmp_attrib;
-	cvector_void* attribs;
-	char* tmp_str = NULL;
-	char choice;
-
-	int overwritten = 1;
-	if (contacts->size) {
-		overwritten = 0;
-		puts("Do you want to overwrite current contacts? (y/N)");
-		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
-		if (choice == 'y' || choice == 'Y') {
-			cvec_clear_void(contacts);
-			overwritten = 1;
-		}
-	}
-	
-	puts("Enter the name of a file to load:");
-	tmp_str = read_string(stdin, SPACE_SET, '\n', 0);
-
-	FILE* file = fopen(tmp_str, "r");
-	free(tmp_str);
-	if (!file) {
-		perror("Failed to open file");
-		return;
-	}
-	
-	xml_tree* tree = new_xml_tree();
-	if (!tree || !parse_xml_file(file, tree))
-		goto exit;
-
-	xml_tree* xml_contact, *xml_contact_members;
-
-	list_for_each_entry(xml_contact, xml_tree, &tree->child_list, list) {
-		cvec_void(&tmp_c.attribs, 0, 3, sizeof(attribute), free_attribute, NULL);
-		cvec_push_void(contacts, &tmp_c);
-		tmp_c_ptr = (contact*)cvec_back_void(contacts);
-		attribs = &tmp_c_ptr->attribs;
-
-		list_for_each_entry(xml_contact_members, xml_tree, &xml_contact->child_list, list) {
-			if (!strcmp(xml_contact_members->key, "firstname"))
-				tmp_c_ptr->first = mystrdup(xml_contact_members->value);
-			else if (!strcmp(xml_contact_members->key, "lastname"))
-				tmp_c_ptr->last = mystrdup(xml_contact_members->value);
-			else if (!strcmp(xml_contact_members->key, "phone"))
-				tmp_c_ptr->phone = mystrdup(xml_contact_members->value);
-			else {
-				tmp_attrib.name = mystrdup(xml_contact_members->key);
-				tmp_attrib.value = mystrdup(xml_contact_members->value);
-
-				cvec_push_void(attribs, &tmp_attrib);
-			}
-		}
-	}
-
-	puts("Contacts loaded successfully.");
-	saved = overwritten;
-
-exit:
-	free_xml_tree(tree);
-	fclose(file);
-
-}
-*/
-
-
 void print_contact(contact* c)
 {
 	attribute* a;
-	printf("Last Name: %s\n", c->last);
-	printf("First Name: %s\n", c->first);
+	printf("Last        : %s\n", c->last);
+	printf("First       : %s\n", c->first);
+	printf("Middle      : %s\n", c->middle);
 	printf("Phone Number: %s\n", c->phone);
 
 	for (int j=0; j<c->attribs.size; ++j) {
@@ -318,10 +295,13 @@ void print_contact_lineid(contact* c)
 int select_rows(sqlite3_stmt* stmt, cvector_i* results, int print)
 {
 	int count = 0, rc;
+	char* attr_str;
 
 	contact c = { 0 };
+	cvec_void(&c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
+
 	const char fmt_hd[] = "%-10s%-15s%-15s%-15s%-15s\n";
-	if (print) {
+	if (print == LINE) {
 		printf(fmt_hd, "id", "last", "first", "middle", "phone");
 		puts("===================================================================");
 	}
@@ -331,9 +311,17 @@ int select_rows(sqlite3_stmt* stmt, cvector_i* results, int print)
 		c.middle = (char*)sqlite3_column_text(stmt, 2);
 		c.last   = (char*)sqlite3_column_text(stmt, 3);
 		c.phone  = (char*)sqlite3_column_text(stmt, 4);
+		
+		attr_str = (char*)sqlite3_column_text(stmt, 5);
+		cvec_clear_void(&c.attribs);
+		parse_attr_str(attr_str, &c.attribs);
 
-		if (print == LINE)
+		if (print == LINE) {
 			print_contact_lineid(&c);
+		} else if (print == BLOCK) {
+			print_contact(&c);
+			putchar('\n');
+		}
 		// no need to free strings, they're handled by sqlite3
 
 		if (results)
@@ -347,6 +335,9 @@ int select_rows(sqlite3_stmt* stmt, cvector_i* results, int print)
 
 	return count;
 }
+
+
+
 
 int get_contact_by_id(int id, contact* c)
 {
@@ -366,7 +357,9 @@ int get_contact_by_id(int id, contact* c)
 	c->phone = mystrdup((char*)sqlite3_column_text(s, 4));
 
 	// TODO attributes
-	
+	char* attr_str = (char*)sqlite3_column_text(s, 5);
+	parse_attr_str(attr_str, &c->attribs);
+
 	sqlite3_reset(s);
 
 	return 1;
@@ -376,7 +369,13 @@ int get_contact_by_id(int id, contact* c)
 
 void display_contacts()
 {
-	select_rows(sqlstmts[SELECT_ALL], NULL, LINE);
+
+	puts("Do you want to show extra attributes? (y/N)");
+	char choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
+	if (choice == 'y' || choice == 'Y')
+		select_rows(sqlstmts[SELECT_ALL], NULL, BLOCK);
+	else
+		select_rows(sqlstmts[SELECT_ALL], NULL, LINE);
 }
 
 
