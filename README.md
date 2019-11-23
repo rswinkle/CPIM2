@@ -4,18 +4,23 @@ CPIM2
 This is a console/text based personal information manager,
 i.e. a contact manager, written in standard C (C99)
 
-There are 3 branches which each use a different method
+There are 4 branches which each use a different method
 of storing the contacts
 
-master uses vector_void which is how I would do it by default
-and what I consider the best and simplest way.
+master uses cvector_void to store both contacts and attributes.
 
-vector_template uses vector_contact and vector_attribute
-generated using generate_code.py in my C Vector library.
+vector_template uses cvector_contact and cvector_attribute
+generated using the [template-like](https://github.com/rswinkle/CPIM2/blob/vector_template/cpim.h#L19) [macros](https://github.com/rswinkle/CPIM2/blob/vector_template/cpim.c#L11) in CVector.
 
 linked_list uses an intrusive doubly linked list and helper
 functions and macros based closely on list.h from the Linux
 kernel.
+
+sqlite uses a sqlite3 database with a single contacts table.  It
+also uses cvector_void for attributes while manipulating a contact.
+Because they're arbitrary, attributes are stored as a single text column
+in the table, '\n' delimited naturally since that's how they're read from the user,
+and there's a function to go from that format to a vector of attributes and vice versa.
 
 
 I wrote this for the following reasons:
