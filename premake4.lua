@@ -9,8 +9,13 @@ solution "CPIM2"
 			kind "ConsoleApp"
 			language "C"
 			files {
-				"main.c", "c_utils.c", "c_utils.h", "cvector.h", "cxml.c", "clist.h",
-				"cxml.h", "cpim.c", "cpim.h"
+				"main.c",
+				"cpim.c",
+				"cpim.h",
+				"cvector.h",
+				"c_utils.c",
+				"c_utils.h",
+				"clist.h",
 			}
 --      libdirs { }
 		links { "sqlite3" }

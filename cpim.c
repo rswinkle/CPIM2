@@ -2,6 +2,7 @@
 
 #include "c_utils.h"
 
+#define STRBUF_SZ 4096
 
 
 enum {
@@ -27,9 +28,9 @@ enum {
 const char* sql[] = {
 	"CREATE TABLE IF NOT EXISTS contacts "
 		"(id INTEGER PRIMARY KEY, "
-		"first TEXT NOT NULL, "
-		"middle TEXT NOT NULL, "
-		"last TEXT NOT NULL, "
+		"first TEXT NOT NULL COLLATE NOCASE, "
+		"middle TEXT NOT NULL COLLATE NOCASE, "
+		"last TEXT NOT NULL COLLATE NOCASE, "
 		"phone TEXT NOT NULL, "
 		"attribs TEXT NOT NULL);",
 
@@ -168,6 +169,42 @@ int parse_attr_str(char* attr_str, cvector_void* attribs)
 	return 1;
 }
 
+char* attribs_to_str(cvector_void* attribs)
+{
+	int cap = STRBUF_SZ;
+	char* attr_str = malloc(cap);
+	attribute* a;
+	int sz = 0;
+	int ret;
+	char* tmp;
+
+	// not using xml because it's overkill and because we're reading from the terminal
+	// and delimited by '\n' we know they can't enter a '\n' as part of either the name or value
+	//
+	// If I were to wrap a gui around this and give them a way to enter arbitrary text
+	// I'd have to go back to some more structured format, maybe look into a json library
+	for (int j=0; j<attribs->size; ++j) {
+		a = GET_ATTRIBUTE(attribs, j);
+		ret = snprintf(&attr_str[sz], cap-sz, "%s\n%s\n", a->name, a->value);
+		if (ret >= STRBUF_SZ-sz) {
+			cap *= 2;
+			if (!(tmp = realloc(attr_str, cap))) {
+				// TODO check/handle all memory allocations?
+				puts("out of memory!");
+				// return NULL;
+				exit(0);
+			}
+			attr_str = tmp;
+			ret = snprintf(&attr_str[sz], cap-sz, "%s\n%s\n", a->name, a->value);
+		}
+
+		sz += ret;
+	}
+
+	//printf("attr_str = \"%s\"\n", attr_str);
+	return attr_str;
+}
+
 void add_contact(sqlite3* db)
 {
 	char* first;
@@ -211,37 +248,8 @@ void add_contact(sqlite3* db)
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
 
-#define BUF_SZ 4096
-	int cap = BUF_SZ;
-	char* attr_str = malloc(cap);
-	attribute* a;
-	int sz = 0;
-	int ret;
-	char* tmp;
 
-	// not using xml because it's overkill and because we're reading from the terminal
-	// and delimited by '\n' we know they can't enter a '\n' as part of either the name or value
-	//
-	// If I were to wrap a gui around this and give them a way to enter arbitrary text
-	// I'd have to go back to some more structured format, maybe look into a json library
-	for (int j=0; j<attribs.size; ++j) {
-		a = GET_ATTRIBUTE(&attribs, j);
-		ret = snprintf(&attr_str[sz], BUF_SZ-sz, "%s\n%s\n", a->name, a->value);
-		if (ret >= BUF_SZ-sz) {
-			cap *= 2;
-			if (!(tmp = realloc(attr_str, cap))) {
-				// TODO check/handle all memory allocations?
-				puts("out of memory!");
-				exit(0);
-			}
-			attr_str = tmp;
-			ret = snprintf(&attr_str[sz], BUF_SZ-sz, "%s\n%s\n", a->name, a->value);
-		}
-
-		sz += ret;
-	}
-
-	//printf("attr_str = \"%s\"\n", attr_str);
+	char* attr_str = attribs_to_str(&attribs);
 
 	sqlite3_stmt* s = sqlstmts[INSERT];
 	sqlite3_bind_text(s, 1, first, -1, SQLITE_STATIC);
@@ -272,14 +280,15 @@ void add_contact(sqlite3* db)
 void print_contact(contact* c)
 {
 	attribute* a;
-	printf("Last        : %s\n", c->last);
-	printf("First       : %s\n", c->first);
-	printf("Middle      : %s\n", c->middle);
-	printf("Phone Number: %s\n", c->phone);
+	int cols = -20; // left justify
+	printf("%*s: %s\n", cols, "Last", c->last);
+	printf("%*s: %s\n", cols, "First", c->first);
+	printf("%*s: %s\n", cols, "Middle", c->middle);
+	printf("%*s: %s\n", cols, "Phone", c->phone);
 
 	for (int j=0; j<c->attribs.size; ++j) {
 		a = GET_ATTRIBUTE(&c->attribs, j);
-		printf("%s: %s\n", a->name, a->value);
+		printf("%*s: %s\n", cols, a->name, a->value);
 	}
 }
 
@@ -369,7 +378,6 @@ int get_contact_by_id(int id, contact* c)
 
 void display_contacts()
 {
-
 	puts("Do you want to show extra attributes? (y/N)");
 	char choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'y' || choice == 'Y')
@@ -459,18 +467,20 @@ void remove_contact(sqlite3* db)
 	cvec_free_i(&results);
 }
 
-void edit_contact(int id, int print_first)
+void edit_contact(int id, int print)
 {
 	attribute* a;
 	attribute tmp_attrib;
 	char choice;
 	contact c = { 0 };
+	cvec_void(&c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
 
 	if (!get_contact_by_id(id, &c))
 		return;
 
-	if (print_first) {
-		//print line
+	if (print == LINE) {
+		print_contact_lineid(&c);
+	} else if (print == BLOCK) {
 		print_contact(&c);
 		putchar('\n');
 	}
@@ -507,13 +517,12 @@ void edit_contact(int id, int print_first)
 		c.phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 	}
 
-	/*
-	for (int j=0; j < c->attribs.size; ++j) {
-		a = GET_ATTRIBUTE(&c->attribs, j);
+	for (int j=0; j < c.attribs.size; ++j) {
+		a = GET_ATTRIBUTE(&c.attribs, j);
 		printf("Do you want to remove or edit the %s attribute? (r/e/N)\n", a->name);
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
-			cvec_erase_void(&c->attribs, j, j);
+			cvec_erase_void(&c.attribs, j, j);
 			--j;
 		} else if (choice == 'E' || choice == 'e') {
 			free(a->value);
@@ -532,19 +541,20 @@ void edit_contact(int id, int print_first)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		cvec_push_void(&c->attribs, &tmp_attrib);
+		cvec_push_void(&c.attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	}
-	*/
+
+	char* attr_str = attribs_to_str(&c.attribs);
 
 	sqlite3_stmt* s = sqlstmts[UPDATE_ALL_ID];
 	sqlite3_bind_text(s, 1, c.first, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 2, c.middle, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 3, c.last, -1, SQLITE_STATIC);
 	sqlite3_bind_text(s, 4, c.phone, -1, SQLITE_STATIC);
-	sqlite3_bind_text(s, 5, "", -1, SQLITE_STATIC);
+	sqlite3_bind_text(s, 5, attr_str, -1, SQLITE_STATIC);
 	sqlite3_bind_int64(s, 6, c.id);
 	if (sqlite3_step(s) != SQLITE_DONE) {
 		puts("failed to update");
@@ -572,23 +582,16 @@ void edit_contacts(sqlite3* db)
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'Y' || choice == 'y') {
 		for (int i=0; i < results.size; ++i) {
-			edit_contact(results.a[i], 1);
+			edit_contact(results.a[i], BLOCK);
 		}
 	} else {
-		/*
 		for (int i=0; i < results.size; ++i) {
-			tmp_c = GET_CONTACT(contacts, results.a[i]);
-			putchar('\n');
-			print_contact(tmp_c);
-			putchar('\n');
-			puts("Do you want to edit the above contact? (y/N)");
+			printf("Do you want to edit contact %d? (y/N)\n", results.a[i]);
 			choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 			if (choice == 'Y' || choice == 'y') {
-				edit_contact(tmp_c, 0);
-				saved = 0;
+				edit_contact(results.a[i], NONE);
 			}
 		}
-		*/
 	}
 
 	cvec_free_i(&results);
