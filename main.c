@@ -4,6 +4,7 @@
 //include this before cvector.h for mystrdup
 #include "c_utils.h"
 
+#define CVEC_ONLY_INT
 #define CVECTOR_IMPLEMENTATION
 #include "cvector.h"
 
@@ -87,6 +88,10 @@ int main(int argc, char** argv)
 		case '?':
 			print_menu();
 			break;
+
+		default:
+			printf("'%c' is not a valid choice!\n", choice);
+			print_menu();
 		}
 		putchar('\n');
 	}

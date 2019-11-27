@@ -1,6 +1,7 @@
 #ifndef CPIM_H
 #define CPIM_H
 
+#define CVEC_ONLY_INT
 #include "cvector.h"
 
 #include <stdlib.h>
@@ -27,7 +28,7 @@ typedef struct contact
 } contact;
 
 
-#define RESIZE(a) ((a)*2)
+#define RESIZE(a) ((a+1)*2)
 
 CVEC_NEW_DECLS2(contact)
 
