@@ -1,6 +1,7 @@
 #ifndef CPIM_H
 #define CPIM_H
 
+#define CVEC_ONLY_INT
 #include "cvector.h"
 
 #include <stdlib.h>
@@ -10,10 +11,6 @@
 #include <sqlite3.h>
 
 
-#define MAX_STR_LENGTH 30
-
-#define GET_CONTACT(VEC, I) ((contact*)&(VEC)->a[(I)*(VEC)->elem_size])
-#define GET_ATTRIBUTE(VEC, I) ((attribute*)&(VEC)->a[(I)*(VEC)->elem_size])
 
 enum {
 	NONE,
@@ -30,6 +27,8 @@ typedef struct attribute
 	char* value;
 } attribute;
 
+CVEC_NEW_DECLS2(attribute)
+
 typedef struct contact
 {
 	i64 id;
@@ -37,7 +36,7 @@ typedef struct contact
 	char* middle;
 	char* last;
 	char* phone;
-	cvector_void attribs;
+	cvector_attribute attribs;
 } contact;
 
 

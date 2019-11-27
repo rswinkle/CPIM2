@@ -57,6 +57,12 @@ sqlite3_stmt* sqlstmts[NUM_STMTS];
 // so main doesn't have to know about it and it doesn't have
 // to be passed as a parameter
 
+#define RESIZE(a) (((a)+1)*2)
+
+CVEC_NEW_DEFS2(attribute, RESIZE)
+
+
+
 void init_db(const char* db_file, sqlite3** db)
 {
 	if (sqlite3_open(db_file, db)) {
@@ -137,10 +143,10 @@ void free_contact(void* tmp)
 	free(c->middle);
 	free(c->last);
 	free(c->phone);
-	cvec_free_void(&c->attribs);
+	cvec_free_attribute(&c->attribs);
 }
 
-int parse_attr_str(char* attr_str, cvector_void* attribs)
+int parse_attr_str(char* attr_str, cvector_attribute* attribs)
 {
 	//printf("attr_str = \"%s\"\n", attr_str);
 	attribute tmp_attrib;
@@ -161,7 +167,7 @@ int parse_attr_str(char* attr_str, cvector_void* attribs)
 		tmp_attrib.value = calloc(e-b+1, 1);
 		memcpy(tmp_attrib.value, b, e-b);
 
-		cvec_push_void(attribs, &tmp_attrib);
+		cvec_push_attribute(attribs, &tmp_attrib);
 
 		b = e+1;
 	}
@@ -169,7 +175,7 @@ int parse_attr_str(char* attr_str, cvector_void* attribs)
 	return 1;
 }
 
-char* attribs_to_str(cvector_void* attribs)
+char* attribs_to_str(cvector_attribute* attribs)
 {
 	int cap = STRBUF_SZ;
 	char* attr_str = malloc(cap);
@@ -184,7 +190,7 @@ char* attribs_to_str(cvector_void* attribs)
 	// If I were to wrap a gui around this and give them a way to enter arbitrary text
 	// I'd have to go back to some more structured format, maybe look into a json library
 	for (int j=0; j<attribs->size; ++j) {
-		a = GET_ATTRIBUTE(attribs, j);
+		a = &attribs->a[j];
 		ret = snprintf(&attr_str[sz], cap-sz, "%s\n%s\n", a->name, a->value);
 		if (ret >= STRBUF_SZ-sz) {
 			cap *= 2;
@@ -229,8 +235,8 @@ void add_contact(sqlite3* db)
 	puts("Enter phone number:");
 	phone = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-	cvector_void attribs;
-	cvec_void(&attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
+	cvector_attribute attribs;
+	cvec_attribute(&attribs, 0, 10, free_attribute, NULL);
 
 	puts("Do you want to add any attributes? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -242,7 +248,7 @@ void add_contact(sqlite3* db)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		cvec_push_void(&attribs, &tmp_attrib);
+		cvec_push_attribute(&attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
@@ -271,7 +277,7 @@ void add_contact(sqlite3* db)
 	free(phone);
 	free(attr_str);
 
-	cvec_free_void(&attribs);
+	cvec_free_attribute(&attribs);
 
 
 }
@@ -287,7 +293,7 @@ void print_contact(contact* c)
 	printf("%*s: %s\n", cols, "Phone", c->phone);
 
 	for (int j=0; j<c->attribs.size; ++j) {
-		a = GET_ATTRIBUTE(&c->attribs, j);
+		a = &c->attribs.a[j];
 		printf("%*s: %s\n", cols, a->name, a->value);
 	}
 }
@@ -307,7 +313,7 @@ int select_rows(sqlite3_stmt* stmt, cvector_i* results, int print)
 	char* attr_str;
 
 	contact c = { 0 };
-	cvec_void(&c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
+	cvec_attribute(&c.attribs, 0, 10, free_attribute, NULL);
 
 	const char fmt_hd[] = "%-10s%-15s%-15s%-15s%-15s\n";
 	if (print == LINE) {
@@ -322,7 +328,7 @@ int select_rows(sqlite3_stmt* stmt, cvector_i* results, int print)
 		c.phone  = (char*)sqlite3_column_text(stmt, 4);
 		
 		attr_str = (char*)sqlite3_column_text(stmt, 5);
-		cvec_clear_void(&c.attribs);
+		cvec_clear_attribute(&c.attribs);
 		parse_attr_str(attr_str, &c.attribs);
 
 		if (print == LINE) {
@@ -473,7 +479,7 @@ void edit_contact(int id, int print)
 	attribute tmp_attrib;
 	char choice;
 	contact c = { 0 };
-	cvec_void(&c.attribs, 0, 10, sizeof(attribute), free_attribute, NULL);
+	cvec_attribute(&c.attribs, 0, 10, free_attribute, NULL);
 
 	if (!get_contact_by_id(id, &c))
 		return;
@@ -518,11 +524,11 @@ void edit_contact(int id, int print)
 	}
 
 	for (int j=0; j < c.attribs.size; ++j) {
-		a = GET_ATTRIBUTE(&c.attribs, j);
+		a = &c.attribs.a[j];
 		printf("Do you want to remove or edit the %s attribute? (r/e/N)\n", a->name);
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 		if (choice == 'R' || choice == 'r') {
-			cvec_erase_void(&c.attribs, j, j);
+			cvec_erase_attribute(&c.attribs, j, j);
 			--j;
 		} else if (choice == 'E' || choice == 'e') {
 			free(a->value);
@@ -541,7 +547,7 @@ void edit_contact(int id, int print)
 		puts("Enter attribute value:");
 		tmp_attrib.value = read_string(stdin, SPACE_SET_NO_NEWLINE, '\n', 0);
 
-		cvec_push_void(&c.attribs, &tmp_attrib);
+		cvec_push_attribute(&c.attribs, &tmp_attrib);
 
 		puts("Do you want to add another attribute? (y/N)");
 		choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
