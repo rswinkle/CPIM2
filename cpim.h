@@ -1,13 +1,12 @@
 #ifndef CPIM_H
 #define CPIM_H
 
+#define CVEC_ONLY_INT
+#define CVEC_ONLY_VOID
 #include "cvector.h"
 
 #include <stdlib.h>
 #include <ctype.h>
-
-
-#define MAX_STR_LENGTH 30
 
 #define GET_CONTACT(VEC, I) ((contact*)&(VEC)->a[(I)*(VEC)->elem_size])
 #define GET_ATTRIBUTE(VEC, I) ((attribute*)&(VEC)->a[(I)*(VEC)->elem_size])

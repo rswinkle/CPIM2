@@ -17,7 +17,7 @@ functions and macros based closely on list.h from the Linux
 kernel.
 
 sqlite uses a sqlite3 database with a single contacts table.  It
-also uses cvector_void for attributes while manipulating a contact.
+also uses cvector_attribute for attributes while manipulating a contact.
 Because they're arbitrary, attributes are stored as a single text column
 in the table, '\n' delimited naturally since that's how they're read from the user,
 and there's a function to go from that format to a vector of attributes and vice versa.
