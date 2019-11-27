@@ -7,9 +7,6 @@
 #include <ctype.h>
 
 
-#define MAX_STR_LENGTH 30
-
-
 typedef struct attribute
 {
 	char* name;

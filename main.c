@@ -84,6 +84,10 @@ int main(int argc, char** argv)
 		case '?':
 			print_menu();
 			break;
+
+		default:
+			printf("'%c' is not a valid choice!\n", choice);
+			print_menu();
 		}
 		putchar('\n');
 	}
