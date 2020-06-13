@@ -287,7 +287,7 @@ void sort_contacts(list_head* contacts)
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
 	if (choice == 'L' || choice == 'l')
 		sort_list(contacts, compare_last);
-	else if (choice == 'F' || choice == 'f') 
+	else if (choice == 'F' || choice == 'f')
 		sort_list(contacts, compare_first);
 	else
 		sort_list(contacts, compare_contact);
