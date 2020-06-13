@@ -317,7 +317,7 @@ void remove_contact(cvector_contact* contacts)
 	if (!results.size)
 		goto exit;
 
-	qsort(results.a, results.size, sizeof(int), compare_int);
+	qsort(results.a, results.size, sizeof(int), cmp_int_lt);
 
 	puts("Do you want to remove them all? (y/N)");
 	choice = read_char(stdin, SPACE_SET_NO_NEWLINE, 0, 1);
