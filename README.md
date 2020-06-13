@@ -26,7 +26,7 @@ and there's a function to go from that format to a vector of attributes and vice
 I wrote this for the following reasons:
 
 1. To contrast with my really old C PIM project
-available here http://www.robertwinkler.com/projects.php
+available [here](http://www.robertwinkler.com/projects/hist_projects.html).
 
 2. As a platform for reaquainting myself with designing
 and writing new code.
