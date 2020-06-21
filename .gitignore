@@ -10,4 +10,6 @@ Makefile
 cmake_install.cmake
 stats/*
 build/*
+!build/Makefile
+!build/cpim2.make
 *.swp
