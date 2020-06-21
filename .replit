@@ -1,2 +1,2 @@
 language = "c"
-run = "cd build && make && ./cpim2"
+run = "cd build && make config=release verbose=1 && ./cpim2"
