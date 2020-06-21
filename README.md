@@ -1,6 +1,8 @@
 CPIM2
 =====
 
+[![Run on Repl.it](https://repl.it/badge/github/rswinkle/CPIM2)](https://repl.it/github/rswinkle/CPIM2)
+
 This is a console/text based personal information manager,
 i.e. a contact manager, written in standard C (C99)
 
@@ -39,4 +41,23 @@ suite.  I think real use is the best kind of testing.
 
 4. To increase my Vim knowledge (ok all programming does this)
 
+Building and Running
+====================
 
+You can use the included Makefile:
+
+    cd build
+    make
+    ...
+    ./cpim2
+
+Or you can regenerate it or generate your own build system/project with premake5:
+
+    premake5 gmake
+    cd build
+    make
+    ...
+    ./cpim2
+
+The instructions for using it are (hopefully) pretty self-explanatory, just a menu
+of actions to take, adding, searching, editing etc.
